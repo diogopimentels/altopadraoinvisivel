@@ -38,6 +38,11 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  // Skip rewriting for API routes
+  if (url.pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
+
   // Rewrite to the appropriate app directory based on the subdomain
   if (isLoja) {
     url.pathname = `/loja${url.pathname}`;
