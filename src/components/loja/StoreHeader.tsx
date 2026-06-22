@@ -1,6 +1,7 @@
 "use client";
 
 import { useCartStore } from "@/store/useCartStore";
+import { SealCheck } from "@phosphor-icons/react";
 
 export function StoreHeader() {
   const { totalItems, toggleCart } = useCartStore();
@@ -9,7 +10,10 @@ export function StoreHeader() {
   return (
     <header className="sticky top-0 z-40 bg-[var(--color-loja-bg)]/80 backdrop-blur-md border-b border-gray-100 px-4 py-4">
       <div className="max-w-md mx-auto flex justify-between items-center">
-        <span className="font-bold text-lg tracking-tight">Alto Padrão Store</span>
+        <span className="font-bold text-lg tracking-tight flex items-center gap-1.5">
+          Alto Padrão Store
+          <SealCheck size={20} weight="fill" className="text-[#0095F6]" />
+        </span>
         <button 
           onClick={toggleCart}
           className="relative w-10 h-10 rounded-full bg-[var(--color-loja-surface)] flex items-center justify-center hover:bg-gray-200 transition-colors"
