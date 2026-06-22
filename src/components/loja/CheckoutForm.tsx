@@ -115,7 +115,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
             />
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex flex-col gap-1 flex-1">
               <label className="text-sm font-bold text-gray-700">Celular (WhatsApp) *</label>
               <input 
@@ -150,8 +150,8 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
             />
           </div>
 
-          <div className="flex gap-4">
-            <div className="flex flex-col gap-1 flex-[2]">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col gap-1 sm:flex-[2]">
               <label className="text-sm font-bold text-gray-700">Rua / Logradouro *</label>
               <input 
                 type="text" required 
@@ -160,7 +160,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                 placeholder="Av. Paulista"
               />
             </div>
-            <div className="flex flex-col gap-1 flex-1">
+            <div className="flex flex-col gap-1 sm:flex-1">
               <label className="text-sm font-bold text-gray-700">Número *</label>
               <input 
                 type="text" required 
@@ -171,7 +171,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex flex-col gap-1 flex-1">
               <label className="text-sm font-bold text-gray-700">Complemento</label>
               <input 
@@ -192,8 +192,8 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
             </div>
           </div>
 
-          <div className="flex gap-4 mb-20">
-            <div className="flex flex-col gap-1 flex-[2]">
+          <div className="flex flex-col sm:flex-row gap-4 mb-24">
+            <div className="flex flex-col gap-1 sm:flex-[2]">
               <label className="text-sm font-bold text-gray-700">Cidade *</label>
               <input 
                 type="text" required 
@@ -202,7 +202,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                 readOnly
               />
             </div>
-            <div className="flex flex-col gap-1 flex-1">
+            <div className="flex flex-col gap-1 sm:flex-1">
               <label className="text-sm font-bold text-gray-700">Estado *</label>
               <input 
                 type="text" required 
