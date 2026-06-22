@@ -12,6 +12,7 @@ create table if not exists products (
   images jsonb default '[]'::jsonb,
   isFeatured boolean default false,
   category text,
+  description text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

@@ -11,6 +11,7 @@ const productSchema = z.object({
   images: z.array(z.string().url("A imagem deve ser uma URL válida")).default([]),
   isFeatured: z.boolean().default(false),
   category: z.string().optional(),
+  description: z.string().optional(),
 });
 
 export interface ProductData {
@@ -20,6 +21,7 @@ export interface ProductData {
   images: string[];
   isFeatured: boolean;
   category?: string;
+  description?: string;
 }
 
 export async function GET() {
@@ -73,7 +75,8 @@ export async function POST(request: Request) {
         price: body.price,
         images: body.images,
         isFeatured: body.isFeatured,
-        category: body.category || null
+        category: body.category || null,
+        description: body.description || null
       })
       .select()
       .single();

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCartStore } from "@/store/useCartStore";
+import Link from "next/link";
 
 interface ProductCardProps {
   id: string;
@@ -19,9 +20,12 @@ export function ProductCard({ id, name, price, images }: ProductCardProps) {
   };
 
   return (
-    <div className="flex flex-col gap-3 w-full group">
+    <div className="flex flex-col gap-3 w-full group relative">
+      <Link href={`/loja/produto/${id}`} className="absolute inset-0 z-0" aria-label={`Ver detalhes de ${name}`} />
+      
       {/* Product Image Area */}
       <div className="aspect-square w-full bg-[var(--color-loja-surface)] rounded-md overflow-hidden relative border border-gray-100">
+        <Link href={`/loja/produto/${id}`} className="absolute inset-0 z-10" />
         {images && images.length > 0 ? (
           <>
             <img 
@@ -30,7 +34,7 @@ export function ProductCard({ id, name, price, images }: ProductCardProps) {
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
             />
             {images.length > 1 && (
-              <div className="absolute bottom-3 left-0 w-full flex justify-center gap-1.5 z-10">
+              <div className="absolute bottom-3 left-0 w-full flex justify-center gap-1.5 z-20 pointer-events-auto">
                 {images.map((_, idx) => (
                   <button
                     key={idx}
@@ -62,7 +66,7 @@ export function ProductCard({ id, name, price, images }: ProductCardProps) {
         </div>
         <button 
           onClick={handleBuy}
-          className="bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] px-4 py-2 rounded-full text-sm font-bold shadow-sm active:scale-95 transition-transform"
+          className="bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] px-4 py-2 rounded-full text-sm font-bold shadow-sm active:scale-95 transition-transform relative z-20"
         >
           Comprar
         </button>

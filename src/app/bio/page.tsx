@@ -4,6 +4,8 @@ import { ContactExpandableButton } from "@/components/bio/ContactExpandableButto
 import { FeaturedProduct } from "@/components/bio/FeaturedProduct";
 import { Storefront, SealCheck } from "@phosphor-icons/react/dist/ssr";
 
+export const dynamic = 'force-dynamic';
+
 export default function BioPage() {
   // Configuração inteligente para o link da Loja (funciona no dev local e em produção)
   const lojaUrl =
