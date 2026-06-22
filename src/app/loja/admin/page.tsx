@@ -113,7 +113,7 @@ export default function AdminPage() {
       {activeTab === 'orders' ? (
         <OrdersList />
       ) : (
-        <>
+        <div className="w-full">
           {isAddingNew || editingProduct ? (
             <ProductForm 
               initialData={editingProduct} 
@@ -187,6 +187,8 @@ export default function AdminPage() {
             )}
           </div>
         </>
+      )}
+        </div>
       )}
     </div>
   );
