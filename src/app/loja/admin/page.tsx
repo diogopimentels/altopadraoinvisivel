@@ -64,7 +64,7 @@ export default function AdminPage() {
   return (
     <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto pb-10">
       
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
         <div>
           <h1 className="text-2xl font-extrabold text-[var(--color-loja-text)]">Gerenciador de Loja</h1>
           <p className="text-[var(--color-loja-muted)] text-sm mt-1">
