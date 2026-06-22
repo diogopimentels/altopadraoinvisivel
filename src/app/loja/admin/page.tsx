@@ -1,0 +1,144 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { ProductData } from "@/app/api/products/route";
+import { ProductForm } from "@/components/admin/ProductForm";
+import { Plus, Star, PencilSimple, Trash } from "@phosphor-icons/react";
+import { logoutAction } from "./actions";
+
+export default function AdminPage() {
+  const [products, setProducts] = useState<ProductData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingProduct, setEditingProduct] = useState<ProductData | null>(null);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    const res = await fetch("/api/products");
+    const data = await res.json();
+    setProducts(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const currentFeatured = products.find(p => p.isFeatured);
+
+  const handleSaveProduct = async (product: ProductData) => {
+    await fetch("/api/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(product),
+    });
+    setEditingProduct(null);
+    setIsAddingNew(false);
+    await fetchProducts(); // recarrega a lista
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+    
+    await fetch(`/api/products?id=${id}`, {
+      method: "DELETE",
+    });
+    await fetchProducts();
+  };
+
+  if (loading && products.length === 0) return <div className="p-8 text-center font-bold">Carregando painel...</div>;
+
+  return (
+    <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto pb-10">
+      
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-[var(--color-loja-text)]">Gerenciador de Loja</h1>
+          <p className="text-[var(--color-loja-muted)] text-sm mt-1">
+            {products.length} {products.length === 1 ? 'produto cadastrado' : 'produtos cadastrados'}
+          </p>
+        </div>
+        <form action={logoutAction}>
+          <button type="submit" className="text-sm font-semibold text-red-500 hover:text-red-700 underline">
+            Sair
+          </button>
+        </form>
+      </div>
+
+      {isAddingNew || editingProduct ? (
+        <ProductForm 
+          initialData={editingProduct} 
+          currentFeaturedName={currentFeatured?.name}
+          onSave={handleSaveProduct}
+          onCancel={() => {
+            setEditingProduct(null);
+            setIsAddingNew(false);
+          }}
+        />
+      ) : (
+        <>
+          <button 
+            onClick={() => setIsAddingNew(true)}
+            className="flex items-center justify-center gap-2 bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] py-4 rounded-xl font-bold shadow-md hover:scale-[1.01] transition-transform"
+          >
+            <Plus size={20} weight="bold" /> Adicionar Novo Produto
+          </button>
+
+          <div className="flex flex-col gap-4 mt-2">
+            {products.map((product) => (
+              <div key={product.id} className="flex gap-4 p-4 border border-gray-200 rounded-lg bg-[var(--color-loja-surface)] items-center">
+                
+                {/* Thumbnail da primeira imagem */}
+                <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden shrink-0 relative">
+                  {product.images[0] ? (
+                    <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-500 text-center">Sem Foto</span>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="flex flex-col flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold leading-tight">{product.name}</h3>
+                    {product.isFeatured && (
+                      <span className="bg-yellow-100 text-yellow-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
+                        <Star weight="fill" size={10} /> Destaque
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm font-medium mt-1 text-[var(--color-loja-muted)]">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setEditingProduct(product)}
+                    className="p-3 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-700 transition-colors"
+                    aria-label="Editar"
+                  >
+                    <PencilSimple size={20} weight="fill" />
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteProduct(product.id)}
+                    className="p-3 bg-red-50 hover:bg-red-100 rounded-full text-red-600 transition-colors"
+                    aria-label="Excluir"
+                  >
+                    <Trash size={20} weight="fill" />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {products.length === 0 && (
+              <div className="text-center py-10 text-gray-500">
+                Nenhum produto cadastrado ainda.
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

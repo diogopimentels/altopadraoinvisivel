@@ -1,0 +1,18 @@
+[
+  {
+    "id": "prod_1",
+    "name": "Produto teste",
+    "price": 27.99,
+    "images": [
+      "/foto.jpeg"
+    ],
+    "isFeatured": true
+  },
+  {
+    "id": "prod_2",
+    "name": "Camiseta Minimalista",
+    "price": 129.9,
+    "images": [],
+    "isFeatured": false
+  }
+]
