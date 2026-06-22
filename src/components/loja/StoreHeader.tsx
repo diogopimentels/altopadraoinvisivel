@@ -2,6 +2,7 @@
 
 import { useCartStore } from "@/store/useCartStore";
 import { SealCheck } from "@phosphor-icons/react";
+import Image from "next/image";
 
 export function StoreHeader() {
   const { totalItems, toggleCart } = useCartStore();
@@ -10,10 +11,15 @@ export function StoreHeader() {
   return (
     <header className="sticky top-0 z-40 bg-[var(--color-loja-bg)]/80 backdrop-blur-md border-b border-gray-100 px-4 py-4">
       <div className="max-w-md mx-auto flex justify-between items-center">
-        <span className="font-bold text-lg tracking-tight flex items-center gap-1.5">
-          Alto Padrão Store
-          <SealCheck size={20} weight="fill" className="text-[#0095F6]" />
-        </span>
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-full overflow-hidden border border-gray-200 shrink-0 relative">
+            <Image src="/foto.jpeg" alt="Caio - Alto Padrão Invisível" fill className="object-cover" sizes="36px" />
+          </div>
+          <span className="font-bold text-[15px] sm:text-base tracking-tight flex items-center gap-1.5 text-[var(--color-loja-text)]">
+            Alto Padrão Invisível Store
+            <SealCheck size={18} weight="fill" className="text-[#0095F6] shrink-0" />
+          </span>
+        </div>
         <button 
           onClick={toggleCart}
           className="relative w-10 h-10 rounded-full bg-[var(--color-loja-surface)] flex items-center justify-center hover:bg-gray-200 transition-colors"
