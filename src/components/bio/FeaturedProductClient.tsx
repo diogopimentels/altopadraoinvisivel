@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+
 import { useState, useEffect } from "react";
 
 export function FeaturedProductClient({ data }: { data: any }) {
@@ -21,8 +21,8 @@ export function FeaturedProductClient({ data }: { data: any }) {
         <span>Produto Destaque</span>
       </div>
       
-      <Link 
-        href={data.link || "/loja"}
+      <a 
+        href={data.link || `${process.env.NODE_ENV === "development" ? "http://loja.localhost:3000" : "https://loja.altopadraoinvisivel.com.br"}/produto/${data.id}`}
         className="flex flex-row items-center gap-4 w-full p-2 border border-[var(--color-bio-accent)]/30 rounded-lg bg-[var(--color-bio-surface)] hover:border-[var(--color-bio-accent)] transition-all duration-500 group"
       >
         {data.images && data.images.length > 0 && (
@@ -50,7 +50,7 @@ export function FeaturedProductClient({ data }: { data: any }) {
             </span>
           )}
         </div>
-      </Link>
+      </a>
     </div>
   );
 }

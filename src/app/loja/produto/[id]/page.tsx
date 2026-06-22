@@ -21,7 +21,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="flex flex-col gap-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
-      <Link href="/loja" className="inline-flex items-center gap-2 text-sm font-bold text-[var(--color-loja-muted)] hover:text-[var(--color-loja-text)] transition-colors w-fit">
+      <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-[var(--color-loja-muted)] hover:text-[var(--color-loja-text)] transition-colors w-fit">
         <ArrowLeft size={16} weight="bold" /> Voltar para a loja
       </Link>
       

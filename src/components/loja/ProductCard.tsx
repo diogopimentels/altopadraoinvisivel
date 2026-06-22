@@ -21,11 +21,11 @@ export function ProductCard({ id, name, price, images }: ProductCardProps) {
 
   return (
     <div className="flex flex-col gap-3 w-full group relative">
-      <Link href={`/loja/produto/${id}`} className="absolute inset-0 z-0" aria-label={`Ver detalhes de ${name}`} />
+      <Link href={`/produto/${id}`} className="absolute inset-0 z-0" aria-label={`Ver detalhes de ${name}`} />
       
       {/* Product Image Area */}
       <div className="aspect-square w-full bg-[var(--color-loja-surface)] rounded-md overflow-hidden relative border border-gray-100">
-        <Link href={`/loja/produto/${id}`} className="absolute inset-0 z-10" />
+        <Link href={`/produto/${id}`} className="absolute inset-0 z-10" />
         {images && images.length > 0 ? (
           <>
             <img 
