@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 // Inicializa a Stripe usando a chave secreta que vamos colocar no .env.local
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -34,9 +35,24 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
         console.log('💰 Pagamento aprovado! Sessão ID:', session.id);
         
-        // TODO: Aqui é onde você vai adicionar a lógica para alterar o status 
-        // do seu pedido no banco de dados para "PAGO".
-        // ex: await updateOrderStatus(session.metadata.orderId, 'PAID');
+        // Recupera o ID do pedido que passamos na criação da sessão
+        const orderId = session.client_reference_id;
+        
+        if (orderId) {
+          // Atualiza o pedido no Supabase para 'paid'
+          const { error } = await supabaseAdmin
+            .from('orders')
+            .update({ payment_status: 'paid' })
+            .eq('id', orderId);
+            
+          if (error) {
+            console.error("Erro ao atualizar o pedido no Supabase:", error);
+          } else {
+            console.log(`✅ Pedido ${orderId} atualizado para 'paid' com sucesso.`);
+          }
+        } else {
+          console.error("Sessão finalizada sem client_reference_id:", session.id);
+        }
         break;
         
       default:

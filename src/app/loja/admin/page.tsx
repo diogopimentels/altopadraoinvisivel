@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { ProductData } from "@/app/api/products/route";
 import { ProductForm } from "@/components/admin/ProductForm";
-import { Plus, Star, PencilSimple, Trash } from "@phosphor-icons/react";
+import { OrdersList } from "@/components/admin/OrdersList";
+import { Plus, Star, PencilSimple, Trash, Storefront, ShoppingBag } from "@phosphor-icons/react";
 import { logoutAction } from "./actions";
 
 export default function AdminPage() {
@@ -11,6 +12,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<ProductData | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -88,9 +90,33 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {isAddingNew || editingProduct ? (
-        <ProductForm 
-          initialData={editingProduct} 
+      {/* TABS */}
+      <div className="flex gap-2 border-b border-gray-200 pb-1 mb-2">
+        <button 
+          onClick={() => setActiveTab('products')}
+          className={`flex items-center gap-2 px-4 py-2 font-bold text-sm transition-all border-b-2 ${
+            activeTab === 'products' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          <Storefront size={18} weight={activeTab === 'products' ? 'fill' : 'regular'} /> Produtos
+        </button>
+        <button 
+          onClick={() => setActiveTab('orders')}
+          className={`flex items-center gap-2 px-4 py-2 font-bold text-sm transition-all border-b-2 ${
+            activeTab === 'orders' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          <ShoppingBag size={18} weight={activeTab === 'orders' ? 'fill' : 'regular'} /> Pedidos
+        </button>
+      </div>
+
+      {activeTab === 'orders' ? (
+        <OrdersList />
+      ) : (
+        <>
+          {isAddingNew || editingProduct ? (
+            <ProductForm 
+              initialData={editingProduct} 
           currentFeaturedName={currentFeatured?.name}
           onSave={handleSaveProduct}
           onCancel={() => {

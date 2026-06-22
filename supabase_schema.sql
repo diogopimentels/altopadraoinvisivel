@@ -16,6 +16,26 @@ create table if not exists products (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- Cria a tabela de pedidos
+create table if not exists orders (
+  id text primary key,
+  customer_name text,
+  customer_phone text,
+  customer_email text,
+  address_cep text,
+  address_street text,
+  address_number text,
+  address_complement text,
+  address_neighborhood text,
+  address_city text,
+  address_state text,
+  items jsonb,
+  total_amount numeric,
+  stripe_session_id text,
+  payment_status text default 'pending',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- Habilita segurança de acesso a nível de linha (apenas para garantir que só nós podemos editar se quiser no futuro)
 alter table products enable row level security;
 
@@ -28,6 +48,12 @@ create policy "Allow public read access"
 drop policy if exists "Allow insert access" on products;
 drop policy if exists "Allow update access" on products;
 drop policy if exists "Allow delete access" on products;
+
+-- Políticas para a tabela de pedidos
+alter table orders enable row level security;
+create policy "Allow admin read orders" on orders for select using (true);
+create policy "Allow insert orders" on orders for insert with check (true);
+create policy "Allow update orders" on orders for update using (true);
 
 -- =========================================================================
 -- PARTE 2: Criando o Storage para as imagens
