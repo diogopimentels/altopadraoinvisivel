@@ -1,4 +1,9 @@
 import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: '2026-05-27.dahlia',
+});
 
 export async function POST(request: Request) {
   try {
@@ -8,32 +13,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Carrinho vazio" }, { status: 400 });
     }
 
-    // AQUI OCORRE A INTEGRAÇÃO COM STRIPE
-    // Exemplo real:
-    // const session = await stripe.checkout.sessions.create({
-    //   payment_method_types: ['card'],
-    //   line_items: items.map(item => ({
-    //     price_data: { currency: 'brl', product_data: { name: item.name }, unit_amount: item.price * 100 },
-    //     quantity: item.quantity,
-    //   })),
-    //   mode: 'payment',
-    //   success_url: `${request.headers.get('origin')}/sucesso`,
-    //   cancel_url: `${request.headers.get('origin')}/`,
-    // });
-    // return NextResponse.json({ url: session.url });
+    const origin = request.headers.get('origin') || 'https://loja.altopadraoinvisivel.com.br';
 
-    console.log("Processando checkout para itens:", items);
-    
-    // MOCK para teste: simulando um delay e retornando uma URL fictícia ou de sucesso
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    return NextResponse.json({ 
-      // Em produção, isso seria a URL real do Checkout do Stripe
-      url: `https://checkout.stripe.com/pay/mock_session_${Date.now()}`
+    // Cria a sessão real na Stripe
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card', 'boleto', 'pix'],
+      line_items: items.map((item: any) => ({
+        price_data: { 
+          currency: 'brl', 
+          product_data: { 
+            name: item.name,
+            images: item.image ? [item.image] : [],
+          }, 
+          unit_amount: Math.round(item.price * 100), // Stripe exige centavos
+        },
+        quantity: item.quantity,
+      })),
+      mode: 'payment',
+      success_url: `${origin}/?success=true`,
+      cancel_url: `${origin}/`,
     });
 
-  } catch (error) {
+    return NextResponse.json({ url: session.url });
+  } catch (error: any) {
     console.error("Erro no checkout:", error);
-    return NextResponse.json({ error: "Erro interno no servidor" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Erro interno no servidor" }, { status: 500 });
   }
 }
