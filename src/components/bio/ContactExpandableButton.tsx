@@ -31,7 +31,7 @@ export function ContactExpandableButton({ label }: ContactExpandableButtonProps)
       {isOpen && (
         <div className="flex flex-col gap-2 pl-4 pr-4 py-2 w-full animate-in slide-in-from-top-2 fade-in duration-300">
           <Link
-            href="https://wa.me/5511999999999" // TODO: Coloque o número correto
+            href="https://wa.me/5517996140999"
             target="_blank"
             className="flex items-center gap-3 w-full p-3 border border-[var(--color-bio-border)] border-opacity-50 rounded-sm bg-[var(--color-bio-surface)] hover:border-[var(--color-bio-accent)] transition-colors duration-300 group"
           >
@@ -41,7 +41,7 @@ export function ContactExpandableButton({ label }: ContactExpandableButtonProps)
             </span>
           </Link>
           <Link
-            href="mailto:contato@altopadraoinvisivel.com.br" // TODO: Coloque o email correto
+            href="mailto:contato@altopadraoinvisivel.com.br"
             className="flex items-center gap-3 w-full p-3 border border-[var(--color-bio-border)] border-opacity-50 rounded-sm bg-[var(--color-bio-surface)] hover:border-[var(--color-bio-accent)] transition-colors duration-300 group"
           >
             <EnvelopeSimple size={24} weight="fill" className="text-[var(--color-bio-muted)] group-hover:text-[var(--color-bio-accent)] transition-colors" />
