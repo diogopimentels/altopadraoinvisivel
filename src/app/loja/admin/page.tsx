@@ -128,9 +128,9 @@ export default function AdminPage() {
         <>
           <button 
             onClick={() => setIsAddingNew(true)}
-            className="flex items-center justify-center gap-2 bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] py-4 rounded-xl font-bold shadow-md hover:scale-[1.01] transition-transform"
+            className="flex items-center justify-center gap-2 bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] py-3 rounded-xl text-sm font-bold shadow-md hover:scale-[1.01] transition-transform"
           >
-            <Plus size={20} weight="bold" /> Adicionar Novo Produto
+            <Plus size={18} weight="bold" /> Adicionar Novo Produto
           </button>
 
           <div className="flex flex-col gap-4 mt-2">
