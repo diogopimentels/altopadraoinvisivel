@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 
 // Inicializa a Stripe usando a chave secreta que vamos colocar no .env.local
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2025-01-27.acacia', // Usamos sempre a versão mais recente e estável
+  apiVersion: '2026-05-27.dahlia', // Usamos a versão mais recente e estável do SDK instalado
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
