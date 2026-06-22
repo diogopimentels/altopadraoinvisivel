@@ -27,14 +27,27 @@ export default function AdminPage() {
   const currentFeatured = products.find(p => p.isFeatured);
 
   const handleSaveProduct = async (product: ProductData) => {
-    await fetch("/api/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(product),
-    });
-    setEditingProduct(null);
-    setIsAddingNew(false);
-    await fetchProducts(); // recarrega a lista
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(product),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("Erro da API:", errorData);
+        alert(`Erro ao salvar: ${errorData.error || 'Verifique os dados enviados.'}`);
+        return; // Não fecha o formulário em caso de erro
+      }
+
+      setEditingProduct(null);
+      setIsAddingNew(false);
+      await fetchProducts(); // recarrega a lista
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao conectar com o servidor.");
+    }
   };
 
   const handleDeleteProduct = async (id: string) => {
