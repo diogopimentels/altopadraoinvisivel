@@ -10,6 +10,7 @@ const productSchema = z.object({
   price: z.number().nonnegative("O preço não pode ser negativo"),
   images: z.array(z.string().url("A imagem deve ser uma URL válida")).default([]),
   isFeatured: z.boolean().default(false),
+  category: z.string().optional(),
 });
 
 export interface ProductData {
@@ -18,6 +19,7 @@ export interface ProductData {
   price: number;
   images: string[];
   isFeatured: boolean;
+  category?: string;
 }
 
 export async function GET() {
@@ -70,7 +72,8 @@ export async function POST(request: Request) {
         name: body.name,
         price: body.price,
         images: body.images,
-        isFeatured: body.isFeatured
+        isFeatured: body.isFeatured,
+        category: body.category || null
       })
       .select()
       .single();

@@ -21,6 +21,7 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
     price: initialData?.price || 0,
     images: initialData?.images || [""],
     isFeatured: initialData?.isFeatured || false,
+    category: initialData?.category || "",
   });
 
   const handleAddImage = () => {
@@ -104,6 +105,17 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
             onChange={(e) => setForm({...form, name: e.target.value})}
             className="border border-gray-300 rounded-md px-3 py-2 text-[var(--color-loja-text)]"
             placeholder="Ex: Camiseta Essential"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-semibold">Categoria</label>
+          <input 
+            type="text" 
+            value={form.category || ""}
+            onChange={(e) => setForm({...form, category: e.target.value})}
+            className="border border-gray-300 rounded-md px-3 py-2 text-[var(--color-loja-text)]"
+            placeholder="Ex: Camisetas, Acessórios..."
           />
         </div>
 

@@ -71,11 +71,21 @@ export default function AdminPage() {
             {products.length} {products.length === 1 ? 'produto cadastrado' : 'produtos cadastrados'}
           </p>
         </div>
-        <form action={logoutAction}>
-          <button type="submit" className="text-sm font-semibold text-red-500 hover:text-red-700 underline">
-            Sair
-          </button>
-        </form>
+        <div className="flex items-center gap-4">
+          <a 
+            href="https://loja.altopadraoinvisivel.com.br" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-sm font-bold text-[var(--color-loja-cta)] hover:underline"
+          >
+            Ver Loja ↗
+          </a>
+          <form action={logoutAction}>
+            <button type="submit" className="text-sm font-semibold text-red-500 hover:text-red-700 underline">
+              Sair
+            </button>
+          </form>
+        </div>
       </div>
 
       {isAddingNew || editingProduct ? (
