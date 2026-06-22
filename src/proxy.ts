@@ -23,8 +23,12 @@ export function proxy(request: NextRequest) {
   }
 
   // PROTEÇÃO CRÍTICA DAS ROTAS DE API
-  // Apenas GET e POST do webhook da Stripe são públicos. Mutações nos produtos exigem token de admin.
-  if (url.pathname.startsWith('/api') && !url.pathname.startsWith('/api/webhook')) {
+  // Apenas GET e endpoints específicos (webhook e checkout) são públicos. Mutações nos produtos exigem token de admin.
+  if (
+    url.pathname.startsWith('/api') && 
+    !url.pathname.startsWith('/api/webhook') && 
+    !url.pathname.startsWith('/api/checkout')
+  ) {
     if (request.method !== 'GET') {
       const adminToken = request.cookies.get('admin_token')?.value;
       const expectedToken = process.env.ADMIN_PASSWORD;
