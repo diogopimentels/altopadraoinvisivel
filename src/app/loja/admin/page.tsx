@@ -13,6 +13,8 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<ProductData | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -49,6 +51,39 @@ export default function AdminPage() {
     } catch (error) {
       console.error(error);
       alert("Erro ao conectar com o servidor.");
+    }
+  };
+
+  const handleBulkUpdate = async (is_published: boolean) => {
+    if (selectedProductIds.size === 0) return;
+    setIsBulkUpdating(true);
+    
+    try {
+      const selectedIdsArray = Array.from(selectedProductIds);
+      const productsToUpdate = products.filter(p => selectedIdsArray.includes(p.id));
+      
+      // Update local state immediately for UI responsiveness
+      setProducts(products.map(p => 
+        selectedProductIds.has(p.id) ? { ...p, is_published } : p
+      ));
+
+      // Fire all API requests in parallel
+      await Promise.all(
+        productsToUpdate.map(p => 
+          fetch("/api/products", {
+            method: "POST",
+            body: JSON.stringify({ ...p, is_published })
+          })
+        )
+      );
+      
+      setSelectedProductIds(new Set()); // Clear selection
+    } catch (error) {
+      console.error("Bulk update error:", error);
+      alert("Erro ao atualizar alguns produtos em massa.");
+      await fetchProducts(); // Revert to source of truth
+    } finally {
+      setIsBulkUpdating(false);
     }
   };
 
@@ -126,19 +161,73 @@ export default function AdminPage() {
         />
       ) : (
         <>
-          <button 
-            onClick={() => setIsAddingNew(true)}
-            className="flex items-center justify-center w-fit px-6 gap-2 bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] py-3 rounded-xl text-sm font-bold shadow-md hover:scale-[1.01] transition-transform"
-          >
-            <Plus size={18} weight="bold" /> Novo Produto
-          </button>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <button 
+              onClick={() => setIsAddingNew(true)}
+              className="flex items-center justify-center w-fit px-6 gap-2 bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] py-3 rounded-xl text-sm font-bold shadow-md hover:scale-[1.01] transition-transform"
+            >
+              <Plus size={18} weight="bold" /> Novo Produto
+            </button>
+
+            {/* Ações em Massa */}
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50">
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 rounded border-gray-300 text-[var(--color-loja-cta)] focus:ring-[var(--color-loja-cta)]"
+                  checked={products.length > 0 && selectedProductIds.size === products.length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedProductIds(new Set(products.map(p => p.id)));
+                    } else {
+                      setSelectedProductIds(new Set());
+                    }
+                  }}
+                />
+                Selecionar Todos
+              </label>
+
+              {selectedProductIds.size > 0 && (
+                <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg border border-gray-200 shadow-sm animate-in fade-in zoom-in duration-200">
+                  <span className="text-xs font-bold text-gray-500 px-2">{selectedProductIds.size} selecionados:</span>
+                  <button
+                    disabled={isBulkUpdating}
+                    onClick={() => handleBulkUpdate(true)}
+                    className="text-xs bg-green-100 text-green-700 font-bold px-3 py-1.5 rounded-md hover:bg-green-200 transition-colors"
+                  >
+                    Publicar
+                  </button>
+                  <button
+                    disabled={isBulkUpdating}
+                    onClick={() => handleBulkUpdate(false)}
+                    className="text-xs bg-yellow-100 text-yellow-800 font-bold px-3 py-1.5 rounded-md hover:bg-yellow-200 transition-colors"
+                  >
+                    Rascunho
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
 
           <div className="flex flex-col gap-4 mt-2">
             {products.map((product) => (
-              <div key={product.id} className="flex gap-4 p-4 border border-gray-200 rounded-lg bg-[var(--color-loja-surface)] items-center">
+              <div key={product.id} className="flex gap-4 p-4 border border-gray-200 rounded-lg bg-[var(--color-loja-surface)] items-center relative overflow-hidden">
+                
+                {/* Checkbox de Seleção */}
+                <input 
+                  type="checkbox" 
+                  checked={selectedProductIds.has(product.id)}
+                  onChange={(e) => {
+                    const next = new Set(selectedProductIds);
+                    if (e.target.checked) next.add(product.id);
+                    else next.delete(product.id);
+                    setSelectedProductIds(next);
+                  }}
+                  className="w-5 h-5 rounded border-gray-300 text-[var(--color-loja-cta)] focus:ring-[var(--color-loja-cta)] cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 z-10"
+                />
                 
                 {/* Thumbnail da primeira imagem */}
-                <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden shrink-0 relative">
+                <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden shrink-0 relative ml-8">
                   {product.images[0] ? (
                     <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
                   ) : (
@@ -171,6 +260,21 @@ export default function AdminPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {/* Chavinha rápida na lista */}
+                  <button
+                    onClick={async () => {
+                      const updated = { ...product, is_published: !product.is_published };
+                      setProducts(products.map(p => p.id === product.id ? updated : p));
+                      await fetch("/api/products", { method: "POST", body: JSON.stringify(updated) });
+                    }}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${product.is_published ? 'bg-green-500' : 'bg-gray-300'}`}
+                    title={product.is_published ? "Mudar para Rascunho" : "Publicar na Loja"}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${product.is_published ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+
+                  <div className="w-px h-6 bg-gray-200 mx-1"></div>
+
                   <button 
                     onClick={() => setEditingProduct(product)}
                     className="p-3 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-700 transition-colors"
