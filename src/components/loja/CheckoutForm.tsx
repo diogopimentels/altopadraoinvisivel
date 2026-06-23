@@ -168,8 +168,6 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
             />
           </div>
 
-          </div>
-
           {form.cep.replace(/\D/g, "").length === 8 && (
             <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
               <div className="flex flex-col sm:flex-row gap-4">
