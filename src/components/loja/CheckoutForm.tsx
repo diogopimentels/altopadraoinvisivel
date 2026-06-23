@@ -127,51 +127,22 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
         <form id="checkout-form" onSubmit={handleCheckout} className="flex flex-col gap-4">
           
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-gray-700">Nome Completo *</label>
-            <input 
-              type="text" required 
-              value={form.name} onChange={e => setForm({...form, name: e.target.value})}
-              className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
-              placeholder="Digite seu nome"
-            />
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-sm font-bold text-gray-700">Celular (WhatsApp) *</label>
-              <input 
-                type="text" required 
-                value={form.phone} onChange={e => setForm({...form, phone: e.target.value})}
-                className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
-                placeholder="(00) 00000-0000"
-              />
-            </div>
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-sm font-bold text-gray-700">E-mail (Opcional)</label>
-              <input 
-                type="email" 
-                value={form.email} onChange={e => setForm({...form, email: e.target.value})}
-                className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
-                placeholder="seu@email.com"
-              />
-            </div>
-          </div>
-
-          <div className="h-px bg-gray-200 my-2"></div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-gray-700">CEP * {cepLoading && <span className="text-xs text-blue-500 font-normal">Buscando...</span>}</label>
+            <label className="text-sm font-bold text-gray-700">1. Qual seu CEP? * {cepLoading && <span className="text-xs text-blue-500 font-normal">Buscando...</span>}</label>
             <input 
               type="text" required maxLength={9}
               value={form.cep} 
               onChange={e => setForm({...form, cep: e.target.value})}
-              className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+              className="border-2 border-gray-300 rounded-xl p-4 outline-none focus:border-black transition-colors font-medium text-lg"
               placeholder="00000-000"
             />
           </div>
 
           {form.cep.replace(/\D/g, "").length === 8 && (
-            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-top-4 duration-500 mt-4">
+              <div className="h-px bg-gray-200"></div>
+              
+              <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">2. Complete seu endereço</h3>
+              
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex flex-col gap-1 sm:flex-[2]">
                   <label className="text-sm font-bold text-gray-700">Rua / Logradouro *</label>
@@ -179,7 +150,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                     type="text" required 
                     value={form.street} onChange={e => setForm({...form, street: e.target.value})}
                     className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
-                    placeholder="Av. Paulista"
+                    placeholder="Sua rua"
                   />
                 </div>
                 <div className="flex flex-col gap-1 sm:flex-1">
@@ -200,7 +171,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                     type="text" 
                     value={form.complement} onChange={e => setForm({...form, complement: e.target.value})}
                     className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
-                    placeholder="Apto 42"
+                    placeholder="Apto, Bloco..."
                   />
                 </div>
                 <div className="flex flex-col gap-1 flex-1">
@@ -209,7 +180,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                     type="text" required 
                     value={form.neighborhood} onChange={e => setForm({...form, neighborhood: e.target.value})}
                     className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
-                    placeholder="Bela Vista"
+                    placeholder="Seu bairro"
                   />
                 </div>
               </div>
@@ -236,26 +207,65 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
           )}
 
           {/* SHIPPING OPTIONS */}
-          {shippingOptions.length > 0 && (
-            <div className="flex flex-col gap-3 mt-4 mb-24 p-4 border border-blue-100 bg-blue-50/30 rounded-xl">
-              <h3 className="font-bold text-[var(--color-loja-text)] text-sm">Opções de Frete</h3>
+          {shippingOptions.length > 0 && form.cep.replace(/\D/g, "").length === 8 && (
+            <div className="flex flex-col gap-3 mt-6 animate-in fade-in slide-in-from-top-4 duration-500">
+              <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">3. Escolha o Frete</h3>
               <div className="flex flex-col gap-2">
                 {shippingOptions.map((opt) => (
-                  <label key={opt.id} className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all ${shippingOption?.id === opt.id ? 'border-[var(--color-loja-cta)] bg-[var(--color-loja-cta)]/5' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+                  <label key={opt.id} className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${shippingOption?.id === opt.id ? 'border-[var(--color-loja-cta)] bg-[var(--color-loja-cta)]/5 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
                     <div className="flex items-center gap-3">
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${shippingOption?.id === opt.id ? 'border-[var(--color-loja-cta)]' : 'border-gray-300'}`}>
-                        {shippingOption?.id === opt.id && <div className="w-2 h-2 rounded-full bg-[var(--color-loja-cta)]" />}
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${shippingOption?.id === opt.id ? 'border-[var(--color-loja-cta)]' : 'border-gray-300'}`}>
+                        {shippingOption?.id === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-loja-cta)]" />}
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-bold text-sm text-[var(--color-loja-text)]">{opt.name}</span>
-                        <span className="text-xs text-gray-500">Até {opt.delivery_time} dias úteis</span>
+                        <span className="font-bold text-[var(--color-loja-text)]">{opt.name}</span>
+                        <span className="text-sm text-gray-500">Chega em até {opt.delivery_time} dias úteis</span>
                       </div>
                     </div>
-                    <span className="font-bold text-[var(--color-loja-text)]">
+                    <span className="font-extrabold text-lg text-[var(--color-loja-text)]">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(opt.price)}
                     </span>
                   </label>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* PERSONAL INFO - ONLY SHOWS IF SHIPPING IS SELECTED */}
+          {shippingOption && form.cep.replace(/\D/g, "").length === 8 && (
+            <div className="flex flex-col gap-4 mt-6 animate-in fade-in slide-in-from-top-4 duration-500 mb-24">
+              <div className="h-px bg-gray-200"></div>
+              <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">4. Quem vai receber?</h3>
+              
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-bold text-gray-700">Nome Completo *</label>
+                <input 
+                  type="text" required 
+                  value={form.name} onChange={e => setForm({...form, name: e.target.value})}
+                  className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                  placeholder="Seu nome"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col gap-1 flex-1">
+                  <label className="text-sm font-bold text-gray-700">Celular (WhatsApp) *</label>
+                  <input 
+                    type="text" required 
+                    value={form.phone} onChange={e => setForm({...form, phone: e.target.value})}
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
+                <div className="flex flex-col gap-1 flex-1">
+                  <label className="text-sm font-bold text-gray-700">E-mail (Opcional)</label>
+                  <input 
+                    type="email" 
+                    value={form.email} onChange={e => setForm({...form, email: e.target.value})}
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                    placeholder="seu@email.com"
+                  />
+                </div>
               </div>
             </div>
           )}
