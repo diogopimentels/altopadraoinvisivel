@@ -7,6 +7,7 @@ export function OrdersList() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'paid' | 'pending'>('all');
 
   useEffect(() => {
     async function fetchOrders() {
@@ -53,10 +54,45 @@ Cidade/UF: ${order.address_city} - ${order.address_state}
     );
   }
 
+  const filteredOrders = orders.filter(order => {
+    if (filter === 'paid') return order.payment_status === 'paid';
+    if (filter === 'pending') return order.payment_status !== 'paid';
+    return true;
+  });
+
   return (
     <div className="flex flex-col gap-6">
-      {orders.map((order) => (
-        <div key={order.id} className="bg-[var(--color-loja-surface)] border border-gray-200 p-5 rounded-xl shadow-sm">
+      
+      {/* Filtros */}
+      <div className="flex gap-2 bg-gray-100 p-1 rounded-lg w-fit">
+        <button 
+          onClick={() => setFilter('all')}
+          className={`px-4 py-2 rounded-md text-sm font-bold transition-colors ${filter === 'all' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          Todos os Pedidos
+        </button>
+        <button 
+          onClick={() => setFilter('paid')}
+          className={`px-4 py-2 rounded-md text-sm font-bold transition-colors flex items-center gap-1 ${filter === 'paid' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          <CheckCircle weight={filter === 'paid' ? 'fill' : 'regular'} size={16} /> Pagos
+        </button>
+        <button 
+          onClick={() => setFilter('pending')}
+          className={`px-4 py-2 rounded-md text-sm font-bold transition-colors flex items-center gap-1 ${filter === 'pending' ? 'bg-white text-yellow-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          <CheckCircle weight={filter === 'pending' ? 'fill' : 'regular'} size={16} /> Aguardando
+        </button>
+      </div>
+
+      {filteredOrders.length === 0 ? (
+        <div className="text-center p-12 border border-gray-200 rounded-xl bg-[var(--color-loja-surface)]">
+          <p className="text-gray-500 font-semibold">Nenhum pedido encontrado nesta categoria.</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {filteredOrders.map((order) => (
+            <div key={order.id} className="bg-[var(--color-loja-surface)] border border-gray-200 p-5 rounded-xl shadow-sm">
           
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -99,7 +135,6 @@ Cidade/UF: ${order.address_city} - ${order.address_state}
               ))}
             </div>
           </div>
-
           <button 
             onClick={() => handleCopyAddress(order)}
             className="w-full flex items-center justify-center gap-2 bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors"
@@ -119,6 +154,8 @@ Cidade/UF: ${order.address_city} - ${order.address_state}
 
         </div>
       ))}
+        </div>
+      )}
     </div>
   );
 }
