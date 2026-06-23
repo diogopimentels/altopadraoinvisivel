@@ -10,12 +10,12 @@ const productSchema = z.object({
   price: z.number().nonnegative("O preço não pode ser negativo"),
   images: z.array(z.string().url("A imagem deve ser uma URL válida")).default([]),
   isFeatured: z.boolean().default(false),
-  category: z.string().optional(),
-  description: z.string().optional(),
-  weight: z.number().default(0.5),
-  width: z.number().default(20),
-  height: z.number().default(15),
-  length: z.number().default(20),
+  category: z.string().nullish(),
+  description: z.string().nullish(),
+  weight: z.number().nullish().transform(val => val ?? 0.5),
+  width: z.number().nullish().transform(val => val ?? 20),
+  height: z.number().nullish().transform(val => val ?? 15),
+  length: z.number().nullish().transform(val => val ?? 20),
   is_published: z.boolean().default(false),
 });
 
