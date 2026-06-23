@@ -55,14 +55,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Erro na API do Melhor Envio" }, { status: 500 });
     }
 
-    const data = await response.json();
+    const melhorenvioData = await response.json();
 
     // Filtra apenas Correios (PAC e Sedex) para não poluir muito, 
     // ou transportadoras específicas.
     // IDs comuns: 1 = PAC, 2 = Sedex.
     const allowedServices = [1, 2]; 
 
-    const shippingOptions = data
+    const options = melhorenvioData
       .filter((opt: any) => !opt.error && allowedServices.includes(opt.id))
       .map((opt: any) => ({
         id: String(opt.id),
@@ -72,7 +72,14 @@ export async function POST(request: Request) {
         company: opt.company?.name || "Correios"
       }));
 
-    return NextResponse.json({ options: shippingOptions });
+    if (options.length === 0) {
+      return NextResponse.json({ 
+        options: [], 
+        error: "Nenhuma opção de frete disponível para este CEP." 
+      });
+    }
+
+    return NextResponse.json({ options });
 
   } catch (error: any) {
     console.error("Erro na API de Frete:", error);

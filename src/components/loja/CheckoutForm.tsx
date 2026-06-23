@@ -12,6 +12,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
   const [loading, setLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
   const [shippingOptions, setShippingOptions] = useState<any[]>([]);
+  const [shippingError, setShippingError] = useState("");
 
   const [form, setForm] = useState({
     name: "",
@@ -52,12 +53,18 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                 body: JSON.stringify({ destinationCep: cleanCep, items })
               });
               const shipData = await shipRes.json();
-              if (shipData.options) {
+              if (shipData.options && shipData.options.length > 0) {
                 setShippingOptions(shipData.options);
                 setShippingOption(shipData.options[0]); // Seleciona o primeiro por padrão
+                setShippingError("");
+              } else {
+                setShippingOptions([]);
+                setShippingError(shipData.error || "Erro ao calcular o frete.");
               }
             } catch(e) {
               console.error("Erro ao calcular frete", e);
+              setShippingOptions([]);
+              setShippingError("Erro de conexão ao calcular o frete.");
             }
           }
         } catch (err) {
@@ -144,8 +151,15 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
               <div className="flex flex-col gap-1 flex-1">
                 <label className="text-sm font-bold text-gray-700">Celular (WhatsApp) *</label>
                 <input 
-                  type="text" required 
-                  value={form.phone} onChange={e => setForm({...form, phone: e.target.value})}
+                  type="text" required maxLength={15}
+                  value={form.phone} 
+                  onChange={e => {
+                    let val = e.target.value.replace(/\D/g, "");
+                    if (val.length > 11) val = val.slice(0, 11);
+                    if (val.length > 2) val = `(${val.slice(0,2)}) ${val.slice(2)}`;
+                    if (val.length > 10) val = `${val.slice(0,10)}-${val.slice(10)}`;
+                    setForm({...form, phone: val});
+                  }}
                   className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
                   placeholder="(00) 00000-0000"
                 />
@@ -170,7 +184,11 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
             <input 
               type="text" required maxLength={9}
               value={form.cep} 
-              onChange={e => setForm({...form, cep: e.target.value})}
+              onChange={e => {
+                let val = e.target.value.replace(/\D/g, "");
+                if (val.length > 5) val = `${val.slice(0,5)}-${val.slice(5,8)}`;
+                setForm({...form, cep: val});
+              }}
               className="border-2 border-gray-300 rounded-xl p-4 outline-none focus:border-black transition-colors font-medium text-lg"
               placeholder="00000-000"
             />
@@ -267,6 +285,15 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                   </label>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* SHIPPING ERROR */}
+          {shippingError && form.cep.replace(/\D/g, "").length === 8 && !cepLoading && (
+            <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl mt-6 animate-in fade-in slide-in-from-top-4 duration-500">
+              <h3 className="font-bold text-red-800 text-sm">Ops! Problema com o Frete</h3>
+              <p className="text-sm text-red-600 mt-1">{shippingError}</p>
+              <p className="text-xs text-red-500 mt-2">Dica: Se você estiver testando na sua máquina, reinicie o servidor para carregar as chaves corretas.</p>
             </div>
           )}
 
