@@ -211,55 +211,57 @@ export default function AdminPage() {
 
           <div className="flex flex-col gap-4 mt-2">
             {products.map((product) => (
-              <div key={product.id} className="flex gap-4 p-4 border border-gray-200 rounded-lg bg-[var(--color-loja-surface)] items-center relative overflow-hidden">
+              <div key={product.id} className="flex flex-col sm:flex-row gap-4 p-4 border border-gray-200 rounded-lg bg-[var(--color-loja-surface)] sm:items-center relative overflow-hidden">
                 
-                {/* Checkbox de Seleção */}
-                <input 
-                  type="checkbox" 
-                  checked={selectedProductIds.has(product.id)}
-                  onChange={(e) => {
-                    const next = new Set(selectedProductIds);
-                    if (e.target.checked) next.add(product.id);
-                    else next.delete(product.id);
-                    setSelectedProductIds(next);
-                  }}
-                  className="w-5 h-5 rounded border-gray-300 text-[var(--color-loja-cta)] focus:ring-[var(--color-loja-cta)] cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 z-10"
-                />
-                
-                {/* Thumbnail da primeira imagem */}
-                <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden shrink-0 relative ml-8">
-                  {product.images[0] ? (
-                    <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-500 text-center">Sem Foto</span>
-                  )}
-                </div>
-
-                {/* Info do Produto */}
-                <div className="flex-1 flex flex-col justify-center">
-                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                    {product.name}
-                    {product.isFeatured && (
-                      <span className="bg-yellow-100 text-yellow-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                        <Star weight="fill" size={10} /> Destaque
-                      </span>
-                    )}
-                    {product.is_published ? (
-                      <span className="bg-green-100 text-green-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded">
-                        Produção
-                      </span>
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  {/* Checkbox de Seleção */}
+                  <input 
+                    type="checkbox" 
+                    checked={selectedProductIds.has(product.id)}
+                    onChange={(e) => {
+                      const next = new Set(selectedProductIds);
+                      if (e.target.checked) next.add(product.id);
+                      else next.delete(product.id);
+                      setSelectedProductIds(next);
+                    }}
+                    className="w-5 h-5 rounded border-gray-300 text-[var(--color-loja-cta)] focus:ring-[var(--color-loja-cta)] cursor-pointer shrink-0"
+                  />
+                  
+                  {/* Thumbnail da primeira imagem */}
+                  <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden shrink-0 relative">
+                    {product.images[0] ? (
+                      <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="bg-yellow-100 text-yellow-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                        🚧 Rascunho
-                      </span>
+                      <span className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-500 text-center">Sem Foto</span>
                     )}
-                  </h3>
-                  <span className="font-extrabold text-[var(--color-loja-text)] mt-1">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
-                  </span>
+                  </div>
+
+                  {/* Info do Produto */}
+                  <div className="flex-1 flex flex-col justify-center min-w-0">
+                    <h3 className="font-bold text-gray-800 flex flex-wrap items-center gap-2">
+                      <span className="truncate">{product.name}</span>
+                      {product.isFeatured && (
+                        <span className="bg-yellow-100 text-yellow-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
+                          <Star weight="fill" size={10} /> Destaque
+                        </span>
+                      )}
+                      {product.is_published ? (
+                        <span className="bg-green-100 text-green-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded shrink-0">
+                          Produção
+                        </span>
+                      ) : (
+                        <span className="bg-yellow-100 text-yellow-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
+                          🚧 Rascunho
+                        </span>
+                      )}
+                    </h3>
+                    <span className="font-extrabold text-[var(--color-loja-text)] mt-1">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 justify-end sm:ml-auto mt-2 sm:mt-0 pt-4 sm:pt-0 border-t border-gray-100 sm:border-none">
                   {/* Chavinha rápida na lista */}
                   <button
                     onClick={async () => {
