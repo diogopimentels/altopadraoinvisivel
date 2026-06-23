@@ -23,11 +23,12 @@ export function proxy(request: NextRequest) {
   }
 
   // PROTEÇÃO CRÍTICA DAS ROTAS DE API
-  // Apenas GET e endpoints específicos (webhook e checkout) são públicos. Mutações nos produtos exigem token de admin.
+  // Apenas GET e endpoints específicos (webhook, checkout e shipping) são públicos. Mutações nos produtos exigem token de admin.
   if (
     url.pathname.startsWith('/api') && 
     !url.pathname.startsWith('/api/webhook') && 
-    !url.pathname.startsWith('/api/checkout')
+    !url.pathname.startsWith('/api/checkout') &&
+    !url.pathname.startsWith('/api/shipping')
   ) {
     if (request.method !== 'GET') {
       const adminToken = request.cookies.get('admin_token')?.value;
