@@ -46,7 +46,8 @@ export async function POST(request: Request) {
         "Authorization": `Bearer ${token}`,
         "User-Agent": "AltoPadraoInvisivel (suporte@altopadraoinvisivel.com.br)"
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      cache: "no-store"
     });
 
     if (!response.ok) {
