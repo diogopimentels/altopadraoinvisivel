@@ -48,8 +48,10 @@ export async function POST(request: Request) {
     }
 
     // 3. Integração com a API da InfinitePay
+    const infinitepayTag = process.env.INFINITEPAY_TAG || "altopadraoinvisivel";
+    
     const infinitePayPayload = {
-      handle: "altopadraoinvisivel",
+      handle: infinitepayTag,
       order_nsu: order_id,
       redirect_url: `${origin}/loja?success=true`,
       customer: {
