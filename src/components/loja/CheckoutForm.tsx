@@ -269,7 +269,11 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
               <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">3. Escolha o Frete</h3>
               <div className="flex flex-col gap-2">
                 {shippingOptions.map((opt) => (
-                  <label key={opt.id} className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${shippingOption?.id === opt.id ? 'border-[var(--color-loja-cta)] bg-[var(--color-loja-cta)]/5 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+                  <div 
+                    key={opt.id} 
+                    onClick={() => setShippingOption(opt)}
+                    className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${shippingOption?.id === opt.id ? 'border-[var(--color-loja-cta)] bg-[var(--color-loja-cta)]/5 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                  >
                     <div className="flex items-center gap-3">
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${shippingOption?.id === opt.id ? 'border-[var(--color-loja-cta)]' : 'border-gray-300'}`}>
                         {shippingOption?.id === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-loja-cta)]" />}
@@ -282,7 +286,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                     <span className="font-extrabold text-lg text-[var(--color-loja-text)]">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(opt.price)}
                     </span>
-                  </label>
+                  </div>
                 ))}
               </div>
             </div>
