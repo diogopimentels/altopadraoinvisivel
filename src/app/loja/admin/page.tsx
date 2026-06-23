@@ -72,6 +72,7 @@ export default function AdminPage() {
         productsToUpdate.map(p => 
           fetch("/api/products", {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ...p, is_published })
           })
         )
@@ -265,9 +266,19 @@ export default function AdminPage() {
                   {/* Chavinha rápida na lista */}
                   <button
                     onClick={async () => {
-                      const updated = { ...product, is_published: !product.is_published };
-                      setProducts(products.map(p => p.id === product.id ? updated : p));
-                      await fetch("/api/products", { method: "POST", body: JSON.stringify(updated) });
+                      try {
+                        const updated = { ...product, is_published: !product.is_published };
+                        setProducts(products.map(p => p.id === product.id ? updated : p));
+                        const res = await fetch("/api/products", { 
+                          method: "POST", 
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(updated) 
+                        });
+                        if (!res.ok) throw new Error("Falha na API");
+                      } catch (e) {
+                        alert("Erro ao alterar o status. Tente novamente.");
+                        await fetchProducts(); // reverts UI
+                      }
                     }}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${product.is_published ? 'bg-green-500' : 'bg-gray-300'}`}
                     title={product.is_published ? "Mudar para Rascunho" : "Publicar na Loja"}
