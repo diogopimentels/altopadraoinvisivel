@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2026-05-27.dahlia',
-});
+// Placeholder para credenciais da InfinitePay (que o usuário vai enviar)
+const INFINITEPAY_API_KEY = process.env.INFINITEPAY_API_KEY;
 
 export async function POST(request: Request) {
   try {
@@ -52,47 +50,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Erro ao registrar pedido." }, { status: 500 });
     }
 
-    // 3. Cria a sessão real na Stripe
-    const session = await stripe.checkout.sessions.create({
-      client_reference_id: order_id,
-      customer_email: customer.email || undefined,
-      line_items: [
-        ...items.map((item: any) => ({
-          price_data: { 
-            currency: 'brl', 
-            product_data: { 
-              name: item.name,
-              images: item.imageUrl ? [item.imageUrl] : [],
-            }, 
-            unit_amount: Math.round(item.price * 100), // Stripe exige centavos
-          },
-          quantity: item.quantity,
-        })),
-        // Adiciona o Frete como um item na nota do Stripe
-        ...(shippingOption ? [{
-          price_data: {
-            currency: 'brl',
-            product_data: {
-              name: `Frete: ${shippingOption.name}`,
-              description: `Entrega em ${address.city} - ${address.state}`,
-            },
-            unit_amount: Math.round(shippingOption.price * 100),
-          },
-          quantity: 1,
-        }] : [])
-      ],
-      mode: 'payment',
-      success_url: `${origin}/loja?success=true`,
-      cancel_url: `${origin}/loja`,
-    });
+    // 3. Integração com InfinitePay (Pendente credenciais)
+    // Como ainda não temos as chaves da API para gerar o link com valor exato,
+    // vamos redirecionar temporariamente para a tag pública da InfinitePay.
+    
+    // O ideal será fazer um POST para https://api.checkout.infinitepay.io/links
+    // com o valor total e dados do pedido quando tivermos a API KEY.
+    
+    const fallbackUrl = `https://infinitepay.io/@altopadraoinvisivel`;
 
-    // 4. Atualiza o pedido com o session ID (opcional para rastreio)
-    await supabaseAdmin
-      .from('orders')
-      .update({ stripe_session_id: session.id })
-      .eq('id', order_id);
-
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: fallbackUrl, order_id });
   } catch (error: any) {
     console.error("Erro no checkout:", error);
     return NextResponse.json({ error: error.message || "Erro interno no servidor" }, { status: 500 });
