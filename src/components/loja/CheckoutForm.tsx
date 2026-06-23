@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCartStore } from "@/store/useCartStore";
 
 interface CheckoutFormProps {
@@ -26,14 +26,15 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
     state: "",
   });
 
-  const handleCepBlur = async () => {
+  useEffect(() => {
     const cleanCep = form.cep.replace(/\D/g, "");
-    if (cleanCep.length === 8) {
-      setCepLoading(true);
-      try {
-        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        const data = await res.json();
-        
+    if (cleanCep.length === 8 && !cepLoading) {
+      const fetchCep = async () => {
+        setCepLoading(true);
+        try {
+          const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+          const data = await res.json();
+          
           if (!data.erro) {
             setForm((prev) => ({
               ...prev,
@@ -64,8 +65,10 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
         } finally {
           setCepLoading(false);
         }
+      };
+      fetchCep();
     }
-  };
+  }, [form.cep]);
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,7 +165,6 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
               type="text" required maxLength={9}
               value={form.cep} 
               onChange={e => setForm({...form, cep: e.target.value})}
-              onBlur={handleCepBlur}
               className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
               placeholder="00000-000"
             />
@@ -218,8 +220,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                   <input 
                     type="text" required 
                     value={form.city} onChange={e => setForm({...form, city: e.target.value})}
-                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors bg-gray-50"
-                    readOnly
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
                   />
                 </div>
                 <div className="flex flex-col gap-1 sm:flex-1">
@@ -227,8 +228,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                   <input 
                     type="text" required 
                     value={form.state} onChange={e => setForm({...form, state: e.target.value})}
-                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors bg-gray-50"
-                    readOnly
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
                   />
                 </div>
               </div>
