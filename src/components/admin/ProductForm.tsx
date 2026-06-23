@@ -27,6 +27,7 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
     width: initialData?.width ?? 20,
     height: initialData?.height ?? 15,
     length: initialData?.length ?? 20,
+    is_published: initialData?.is_published ?? false,
   });
 
   const handleAddImage = () => {
@@ -264,6 +265,33 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
             <span className="text-xs text-[var(--color-loja-muted)]">O produto aparecerá no topo da tela inicial. Apenas 1 produto pode ser destaque por vez.</span>
           </div>
         </label>
+
+        {/* STATUS / PUBLISHED */}
+        <div className="flex flex-col gap-3 mt-2 bg-gray-50 p-4 rounded-md border border-gray-200">
+          <h3 className="font-bold text-sm">Visibilidade na Loja</h3>
+          <div className="flex bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, is_published: false })}
+              className={`flex-1 py-3 text-sm font-bold transition-colors ${!form.is_published ? 'bg-yellow-100 text-yellow-800' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+              🚧 Modo Desenvolvedor (Rascunho)
+            </button>
+            <div className="w-px bg-gray-200"></div>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, is_published: true })}
+              className={`flex-1 py-3 text-sm font-bold transition-colors ${form.is_published ? 'bg-green-100 text-green-800' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+              ✅ Modo Produção (Público)
+            </button>
+          </div>
+          {!form.is_published ? (
+            <p className="text-xs text-yellow-700 font-medium">Este produto ficará visível apenas para você (Admin) visualizar e testar. O cliente não o verá.</p>
+          ) : (
+            <p className="text-xs text-green-700 font-medium">Este produto aparecerá na loja e estará disponível para clientes comprarem.</p>
+          )}
+        </div>
 
         <div className="flex gap-4 mt-4">
           <button 

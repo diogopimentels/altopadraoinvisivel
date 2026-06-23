@@ -1,15 +1,28 @@
 import { ProductList } from "@/components/loja/ProductList";
 import { supabase } from "@/lib/supabase";
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
 export default async function LojaPage() {
   let products: any[] = [];
+  let isAdmin = false;
+  
   try {
-    const { data, error } = await supabase
+    const cookieStore = await cookies();
+    const adminToken = cookieStore.get('admin_token')?.value;
+    isAdmin = adminToken === process.env.ADMIN_PASSWORD;
+
+    let query = supabase
       .from('products')
       .select('*')
       .order('created_at', { ascending: false });
+      
+    if (!isAdmin) {
+      query = query.eq('is_published', true);
+    }
+    
+    const { data, error } = await query;
       
     if (!error && data) {
       products = data;
@@ -33,6 +46,17 @@ export default async function LojaPage() {
       ) : (
         <>
           {/* Banner / Header */}
+          {isAdmin && (
+            <div className="bg-yellow-100 p-4 rounded-lg text-center border border-yellow-300 mb-6 shadow-sm">
+              <h2 className="text-yellow-800 font-bold flex items-center justify-center gap-2">
+                <span className="text-xl">🚧</span> Modo Desenvolvedor Ativo
+              </h2>
+              <p className="text-yellow-700 text-sm mt-1">
+                Você está vendo a loja como Administrador. Produtos em <span className="font-bold">Rascunho</span> estão visíveis para você, mas ocultos para o público geral.
+              </p>
+            </div>
+          )}
+
           <div className="bg-[var(--color-loja-surface)] p-6 rounded-lg text-center border border-gray-100">
             <h1 className="text-2xl font-extrabold mb-2 text-[var(--color-loja-text)]">Produtos Disponíveis</h1>
             <p className="text-[var(--color-loja-muted)] text-sm mb-1">Curadoria dos melhores produtos.</p>

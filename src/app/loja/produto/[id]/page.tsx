@@ -3,17 +3,27 @@ import { notFound } from "next/navigation";
 import { ProductClient } from "./ProductClient";
 import Link from "next/link";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const { data: product, error } = await supabase
+  const cookieStore = await cookies();
+  const adminToken = cookieStore.get('admin_token')?.value;
+  const isAdmin = adminToken === process.env.ADMIN_PASSWORD;
+
+  let query = supabase
     .from('products')
     .select('*')
-    .eq('id', id)
-    .single();
+    .eq('id', id);
+
+  if (!isAdmin) {
+    query = query.eq('is_published', true);
+  }
+
+  const { data: product, error } = await query.single();
 
   if (error || !product) {
     notFound();

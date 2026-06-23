@@ -17,6 +17,7 @@ create table if not exists products (
   width numeric default 20,
   height numeric default 15,
   length numeric default 20,
+  is_published boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -78,3 +79,14 @@ create policy "Public Access"
 drop policy if exists "Upload Access" on storage.objects;
 drop policy if exists "Update Access" on storage.objects;
 drop policy if exists "Delete Access" on storage.objects;
+
+-- =========================================================================
+-- PARTE 3: Migrações (Atualizações)
+-- =========================================================================
+
+-- Adiciona a coluna de Rascunho/Publicado aos produtos existentes (se ainda não existir)
+alter table products add column if not exists is_published boolean default false;
+
+-- Marca todos os produtos antigos como PUBLICADOS para não tirá-los do ar
+update products set is_published = true where is_published is false;
+

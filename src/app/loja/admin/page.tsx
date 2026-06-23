@@ -146,17 +146,26 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                {/* Info */}
-                <div className="flex flex-col flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold leading-tight">{product.name}</h3>
+                {/* Info do Produto */}
+                <div className="flex-1 flex flex-col justify-center">
+                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                    {product.name}
                     {product.isFeatured && (
-                      <span className="bg-yellow-100 text-yellow-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
+                      <span className="bg-yellow-100 text-yellow-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded flex items-center gap-1">
                         <Star weight="fill" size={10} /> Destaque
                       </span>
                     )}
-                  </div>
-                  <span className="text-sm font-medium mt-1 text-[var(--color-loja-muted)]">
+                    {product.is_published ? (
+                      <span className="bg-green-100 text-green-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded">
+                        Produção
+                      </span>
+                    ) : (
+                      <span className="bg-yellow-100 text-yellow-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                        🚧 Rascunho
+                      </span>
+                    )}
+                  </h3>
+                  <span className="font-extrabold text-[var(--color-loja-text)] mt-1">
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
                   </span>
                 </div>

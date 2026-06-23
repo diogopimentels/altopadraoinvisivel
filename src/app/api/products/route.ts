@@ -16,6 +16,7 @@ const productSchema = z.object({
   width: z.number().default(20),
   height: z.number().default(15),
   length: z.number().default(20),
+  is_published: z.boolean().default(false),
 });
 
 export interface ProductData {
@@ -30,14 +31,28 @@ export interface ProductData {
   width?: number;
   height?: number;
   length?: number;
+  is_published: boolean;
 }
+
+import { cookies } from 'next/headers';
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
+    const cookieStore = await cookies();
+    const adminToken = cookieStore.get('admin_token')?.value;
+    const isAdmin = adminToken === process.env.ADMIN_PASSWORD;
+
+    let query = supabase
       .from('products')
       .select('*')
       .order('created_at', { ascending: false });
+
+    // Se não for admin, mostra APENAS os produtos publicados
+    if (!isAdmin) {
+      query = query.eq('is_published', true);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
@@ -88,7 +103,8 @@ export async function POST(request: Request) {
         weight: body.weight ?? 0.5,
         width: body.width ?? 20,
         height: body.height ?? 15,
-        length: body.length ?? 20
+        length: body.length ?? 20,
+        is_published: body.is_published
       })
       .select()
       .single();
