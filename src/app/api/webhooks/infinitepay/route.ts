@@ -17,10 +17,17 @@ export async function POST(request: Request) {
     //   "items": [...]
     // }
 
-    const orderId = data.order_nsu;
+    // Tenta encontrar o order_nsu em diferentes estruturas comuns de Webhooks de pagamento
+    const orderId = data.order_nsu || 
+                    data.metadata?.order_nsu || 
+                    data.data?.order_nsu || 
+                    data.data?.metadata?.order_nsu || 
+                    data.transaction?.order_nsu ||
+                    data.payment?.order_nsu;
 
     if (!orderId) {
-      return NextResponse.json({ error: "order_nsu não encontrado" }, { status: 400 });
+      console.error("Webhook payload desconhecido. Não achei order_nsu:", JSON.stringify(data));
+      return NextResponse.json({ error: "order_nsu não encontrado", payload_recebido: data }, { status: 400 });
     }
 
     // Atualiza o pedido no banco de dados para "pago"

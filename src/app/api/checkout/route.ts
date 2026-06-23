@@ -65,6 +65,9 @@ export async function POST(request: Request) {
       handle: infinitepayTag,
       order_nsu: order_id,
       redirect_url: `${origin}/loja?success=true`,
+      webhook_url: `${origin}/api/webhooks/infinitepay`,
+      notification_url: `${origin}/api/webhooks/infinitepay`,
+      metadata: { order_nsu: order_id },
       customer: {
         name: formattedName,
         email: customer.email || "contato@altopadraoinvisivel.com.br",
