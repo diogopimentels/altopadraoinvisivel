@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
-// Placeholder para credenciais da InfinitePay (que o usuário vai enviar)
-const INFINITEPAY_API_KEY = process.env.INFINITEPAY_API_KEY;
-
 export async function POST(request: Request) {
   try {
     const { items, customer, address, shippingOption } = await request.json();
@@ -50,16 +47,51 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Erro ao registrar pedido." }, { status: 500 });
     }
 
-    // 3. Integração com InfinitePay (Pendente credenciais)
-    // Como ainda não temos as chaves da API para gerar o link com valor exato,
-    // vamos redirecionar temporariamente para a tag pública da InfinitePay.
-    
-    // O ideal será fazer um POST para https://api.checkout.infinitepay.io/links
-    // com o valor total e dados do pedido quando tivermos a API KEY.
-    
-    const fallbackUrl = `https://infinitepay.io/@altopadraoinvisivel`;
+    // 3. Integração com a API da InfinitePay
+    const infinitePayPayload = {
+      handle: "altopadraoinvisivel",
+      order_nsu: order_id,
+      redirect_url: `${origin}/loja?success=true`,
+      customer: {
+        name: customer.name,
+        email: customer.email || "contato@altopadraoinvisivel.com.br",
+        phone_number: customer.phone.replace(/\D/g, '') // Apenas números
+      },
+      address: {
+        cep: address.cep.replace(/\D/g, ''),
+        street: address.street,
+        neighborhood: address.neighborhood,
+        number: address.number,
+        complement: address.complement || ""
+      },
+      items: [
+        ...items.map((item: any) => ({
+          quantity: item.quantity,
+          price: Math.round(item.price * 100), // Em centavos
+          description: item.name
+        })),
+        ...(shippingOption ? [{
+          quantity: 1,
+          price: Math.round(shippingOption.price * 100),
+          description: `Frete: ${shippingOption.name}`
+        }] : [])
+      ]
+    };
 
-    return NextResponse.json({ url: fallbackUrl, order_id });
+    const res = await fetch("https://api.checkout.infinitepay.io/links", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(infinitePayPayload)
+    });
+
+    const infiniteData = await res.json();
+
+    if (!infiniteData.url) {
+      console.error("InfinitePay Link Creation Error:", infiniteData);
+      return NextResponse.json({ error: "Erro ao gerar link de pagamento." }, { status: 500 });
+    }
+
+    return NextResponse.json({ url: infiniteData.url, order_id });
   } catch (error: any) {
     console.error("Erro no checkout:", error);
     return NextResponse.json({ error: error.message || "Erro interno no servidor" }, { status: 500 });
