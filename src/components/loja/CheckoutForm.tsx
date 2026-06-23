@@ -168,68 +168,74 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex flex-col gap-1 sm:flex-[2]">
-              <label className="text-sm font-bold text-gray-700">Rua / Logradouro *</label>
-              <input 
-                type="text" required 
-                value={form.street} onChange={e => setForm({...form, street: e.target.value})}
-                className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
-                placeholder="Av. Paulista"
-              />
-            </div>
-            <div className="flex flex-col gap-1 sm:flex-1">
-              <label className="text-sm font-bold text-gray-700">Número *</label>
-              <input 
-                type="text" required 
-                value={form.number} onChange={e => setForm({...form, number: e.target.value})}
-                className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
-                placeholder="1000"
-              />
-            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-sm font-bold text-gray-700">Complemento</label>
-              <input 
-                type="text" 
-                value={form.complement} onChange={e => setForm({...form, complement: e.target.value})}
-                className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
-                placeholder="Apto 42"
-              />
-            </div>
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-sm font-bold text-gray-700">Bairro *</label>
-              <input 
-                type="text" required 
-                value={form.neighborhood} onChange={e => setForm({...form, neighborhood: e.target.value})}
-                className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
-                placeholder="Bela Vista"
-              />
-            </div>
-          </div>
+          {form.cep.replace(/\D/g, "").length === 8 && (
+            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col gap-1 sm:flex-[2]">
+                  <label className="text-sm font-bold text-gray-700">Rua / Logradouro *</label>
+                  <input 
+                    type="text" required 
+                    value={form.street} onChange={e => setForm({...form, street: e.target.value})}
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                    placeholder="Av. Paulista"
+                  />
+                </div>
+                <div className="flex flex-col gap-1 sm:flex-1">
+                  <label className="text-sm font-bold text-gray-700">Número *</label>
+                  <input 
+                    type="text" required 
+                    value={form.number} onChange={e => setForm({...form, number: e.target.value})}
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                    placeholder="1000"
+                  />
+                </div>
+              </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 mb-24">
-            <div className="flex flex-col gap-1 sm:flex-[2]">
-              <label className="text-sm font-bold text-gray-700">Cidade *</label>
-              <input 
-                type="text" required 
-                value={form.city} onChange={e => setForm({...form, city: e.target.value})}
-                className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors bg-gray-50"
-                readOnly
-              />
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col gap-1 flex-1">
+                  <label className="text-sm font-bold text-gray-700">Complemento</label>
+                  <input 
+                    type="text" 
+                    value={form.complement} onChange={e => setForm({...form, complement: e.target.value})}
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                    placeholder="Apto 42"
+                  />
+                </div>
+                <div className="flex flex-col gap-1 flex-1">
+                  <label className="text-sm font-bold text-gray-700">Bairro *</label>
+                  <input 
+                    type="text" required 
+                    value={form.neighborhood} onChange={e => setForm({...form, neighborhood: e.target.value})}
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                    placeholder="Bela Vista"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col gap-1 sm:flex-[2]">
+                  <label className="text-sm font-bold text-gray-700">Cidade *</label>
+                  <input 
+                    type="text" required 
+                    value={form.city} onChange={e => setForm({...form, city: e.target.value})}
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors bg-gray-50"
+                    readOnly
+                  />
+                </div>
+                <div className="flex flex-col gap-1 sm:flex-1">
+                  <label className="text-sm font-bold text-gray-700">Estado *</label>
+                  <input 
+                    type="text" required 
+                    value={form.state} onChange={e => setForm({...form, state: e.target.value})}
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors bg-gray-50"
+                    readOnly
+                  />
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col gap-1 sm:flex-1">
-              <label className="text-sm font-bold text-gray-700">Estado *</label>
-              <input 
-                type="text" required 
-                value={form.state} onChange={e => setForm({...form, state: e.target.value})}
-                className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors bg-gray-50"
-                readOnly
-              />
-            </div>
-          </div>
+          )}
 
           {/* SHIPPING OPTIONS */}
           {shippingOptions.length > 0 && (
