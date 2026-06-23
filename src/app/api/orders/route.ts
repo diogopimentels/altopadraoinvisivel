@@ -14,11 +14,10 @@ export async function GET() {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // Busca apenas os pedidos que foram pagos
+    // Busca todos os pedidos
     const { data, error } = await supabaseAdmin
       .from('orders')
       .select('*')
-      .eq('payment_status', 'paid')
       .order('created_at', { ascending: false });
 
     if (error) {

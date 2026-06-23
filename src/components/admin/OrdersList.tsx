@@ -48,7 +48,7 @@ Cidade/UF: ${order.address_city} - ${order.address_state}
   if (orders.length === 0) {
     return (
       <div className="text-center p-12 border border-gray-200 rounded-xl bg-[var(--color-loja-surface)]">
-        <p className="text-gray-500 font-semibold">Nenhum pedido pago encontrado.</p>
+        <p className="text-gray-500 font-semibold">Nenhum pedido encontrado.</p>
       </div>
     );
   }
@@ -62,17 +62,29 @@ Cidade/UF: ${order.address_city} - ${order.address_state}
             <div>
               <h3 className="font-extrabold text-lg flex items-center gap-2">
                 {order.customer_name}
-                <span className="bg-green-100 text-green-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                  <CheckCircle weight="fill" size={12} /> Pago
-                </span>
+                {order.payment_status === 'paid' ? (
+                  <span className="bg-green-100 text-green-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                    <CheckCircle weight="fill" size={12} /> Pago
+                  </span>
+                ) : (
+                  <span className="bg-yellow-100 text-yellow-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                    <CheckCircle weight="regular" size={12} /> Aguardando Pagamento
+                  </span>
+                )}
               </h3>
               <p className="text-sm text-gray-500 mt-1">
                 {new Date(order.created_at).toLocaleString('pt-BR')}
               </p>
             </div>
-            <div className="text-right">
+            <div className="text-right flex flex-col items-end">
               <span className="block font-bold text-lg text-[var(--color-loja-text)]">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_amount)}
+                Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_amount)}
+              </span>
+              <span className="block text-xs text-green-600 font-bold mt-1">
+                Lucro Líquido: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_amount - (order.shipping_cost || 0))}
+              </span>
+              <span className="block text-xs text-gray-500 mt-0.5">
+                Frete: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.shipping_cost || 0)}
               </span>
             </div>
           </div>
