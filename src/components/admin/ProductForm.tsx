@@ -23,6 +23,10 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
     isFeatured: initialData?.isFeatured || false,
     category: initialData?.category || "",
     description: initialData?.description || "",
+    weight: initialData?.weight ?? 0.5,
+    width: initialData?.width ?? 20,
+    height: initialData?.height ?? 15,
+    length: initialData?.length ?? 20,
   });
 
   const handleAddImage = () => {
@@ -142,6 +146,49 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
             className="border border-gray-300 rounded-md px-3 py-2 text-[var(--color-loja-text)]"
             placeholder="Ex: 129.90"
           />
+        </div>
+
+        {/* DIMENSIONS & WEIGHT */}
+        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <h3 className="font-bold text-sm mb-3">Dimensões e Peso (Para Frete)</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold">Peso (kg)</label>
+              <input 
+                type="number" step="0.01" min="0" required
+                value={form.weight ?? 0.5}
+                onChange={(e) => setForm({...form, weight: parseFloat(e.target.value)})}
+                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold">Largura (cm)</label>
+              <input 
+                type="number" step="0.1" min="1" required
+                value={form.width ?? 20}
+                onChange={(e) => setForm({...form, width: parseFloat(e.target.value)})}
+                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold">Altura (cm)</label>
+              <input 
+                type="number" step="0.1" min="1" required
+                value={form.height ?? 15}
+                onChange={(e) => setForm({...form, height: parseFloat(e.target.value)})}
+                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold">Compr.(cm)</label>
+              <input 
+                type="number" step="0.1" min="1" required
+                value={form.length ?? 20}
+                onChange={(e) => setForm({...form, length: parseFloat(e.target.value)})}
+                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col gap-3">

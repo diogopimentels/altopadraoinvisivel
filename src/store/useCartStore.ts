@@ -11,6 +11,8 @@ export interface CartItem {
 interface CartStore {
   items: CartItem[];
   isOpen: boolean;
+  shippingOption: { name: string; price: number } | null;
+  setShippingOption: (option: { name: string; price: number } | null) => void;
   addItem: (item: Omit<CartItem, 'quantity'>) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -23,6 +25,9 @@ interface CartStore {
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   isOpen: false,
+  shippingOption: null,
+
+  setShippingOption: (option) => set({ shippingOption: option }),
 
   addItem: (newItem) => {
     set((state) => {

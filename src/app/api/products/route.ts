@@ -12,6 +12,10 @@ const productSchema = z.object({
   isFeatured: z.boolean().default(false),
   category: z.string().optional(),
   description: z.string().optional(),
+  weight: z.number().default(0.5),
+  width: z.number().default(20),
+  height: z.number().default(15),
+  length: z.number().default(20),
 });
 
 export interface ProductData {
@@ -22,6 +26,10 @@ export interface ProductData {
   isFeatured: boolean;
   category?: string;
   description?: string;
+  weight?: number;
+  width?: number;
+  height?: number;
+  length?: number;
 }
 
 export async function GET() {
@@ -76,7 +84,11 @@ export async function POST(request: Request) {
         images: body.images,
         isFeatured: body.isFeatured,
         category: body.category || null,
-        description: body.description || null
+        description: body.description || null,
+        weight: body.weight ?? 0.5,
+        width: body.width ?? 20,
+        height: body.height ?? 15,
+        length: body.length ?? 20
       })
       .select()
       .single();

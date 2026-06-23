@@ -8,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 
 export async function POST(request: Request) {
   try {
-    const { items, customer, address } = await request.json();
+    const { items, customer, address, shippingOption } = await request.json();
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Carrinho vazio" }, { status: 400 });
@@ -21,7 +21,9 @@ export async function POST(request: Request) {
     const origin = request.headers.get('origin') || 'https://loja.altopadraoinvisivel.com.br';
 
     // 1. Calcula o total (em BRL real)
-    const total_amount = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
+    const items_total = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
+    const shipping_cost = shippingOption ? shippingOption.price : 0;
+    const total_amount = items_total + shipping_cost;
     const order_id = 'ord_' + Date.now();
 
     // 2. Salva o pedido como pendente no banco de dados
@@ -41,6 +43,7 @@ export async function POST(request: Request) {
         address_state: address.state,
         items: items,
         total_amount: total_amount,
+        shipping_cost: shipping_cost,
         payment_status: 'pending'
       });
 
@@ -53,17 +56,31 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create({
       client_reference_id: order_id,
       customer_email: customer.email || undefined,
-      line_items: items.map((item: any) => ({
-        price_data: { 
-          currency: 'brl', 
-          product_data: { 
-            name: item.name,
-            images: item.imageUrl ? [item.imageUrl] : [],
-          }, 
-          unit_amount: Math.round(item.price * 100), // Stripe exige centavos
-        },
-        quantity: item.quantity,
-      })),
+      line_items: [
+        ...items.map((item: any) => ({
+          price_data: { 
+            currency: 'brl', 
+            product_data: { 
+              name: item.name,
+              images: item.imageUrl ? [item.imageUrl] : [],
+            }, 
+            unit_amount: Math.round(item.price * 100), // Stripe exige centavos
+          },
+          quantity: item.quantity,
+        })),
+        // Adiciona o Frete como um item na nota do Stripe
+        ...(shippingOption ? [{
+          price_data: {
+            currency: 'brl',
+            product_data: {
+              name: `Frete: ${shippingOption.name}`,
+              description: `Entrega em ${address.city} - ${address.state}`,
+            },
+            unit_amount: Math.round(shippingOption.price * 100),
+          },
+          quantity: 1,
+        }] : [])
+      ],
       mode: 'payment',
       success_url: `${origin}/loja?success=true`,
       cancel_url: `${origin}/loja`,

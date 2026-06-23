@@ -13,6 +13,10 @@ create table if not exists products (
   isFeatured boolean default false,
   category text,
   description text,
+  weight numeric default 0.5,
+  width numeric default 20,
+  height numeric default 15,
+  length numeric default 20,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -31,6 +35,7 @@ create table if not exists orders (
   address_state text,
   items jsonb,
   total_amount numeric,
+  shipping_cost numeric default 0,
   stripe_session_id text,
   payment_status text default 'pending',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null

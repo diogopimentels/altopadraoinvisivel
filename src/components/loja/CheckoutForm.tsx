@@ -8,9 +8,10 @@ interface CheckoutFormProps {
 }
 
 export function CheckoutForm({ onBack }: CheckoutFormProps) {
-  const { items, clearCart } = useCartStore();
+  const { items, clearCart, shippingOption, setShippingOption } = useCartStore();
   const [loading, setLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
+  const [shippingOptions, setShippingOptions] = useState<any[]>([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -33,20 +34,36 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
         const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
         const data = await res.json();
         
-        if (!data.erro) {
-          setForm((prev) => ({
-            ...prev,
-            street: data.logradouro,
-            neighborhood: data.bairro,
-            city: data.localidade,
-            state: data.uf,
-          }));
+          if (!data.erro) {
+            setForm((prev) => ({
+              ...prev,
+              street: data.logradouro,
+              neighborhood: data.bairro,
+              city: data.localidade,
+              state: data.uf,
+            }));
+
+            // Busca as opções de frete
+            try {
+              const shipRes = await fetch("/api/shipping", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ destinationCep: cleanCep, items })
+              });
+              const shipData = await shipRes.json();
+              if (shipData.options) {
+                setShippingOptions(shipData.options);
+                setShippingOption(shipData.options[0]); // Seleciona o primeiro por padrão
+              }
+            } catch(e) {
+              console.error("Erro ao calcular frete", e);
+            }
+          }
+        } catch (err) {
+          console.error("Erro ao buscar CEP", err);
+        } finally {
+          setCepLoading(false);
         }
-      } catch (err) {
-        console.error("Erro ao buscar CEP", err);
-      } finally {
-        setCepLoading(false);
-      }
     }
   };
 
@@ -60,6 +77,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items,
+          shippingOption,
           customer: {
             name: form.name,
             phone: form.phone,
@@ -213,6 +231,31 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
             </div>
           </div>
 
+          {/* SHIPPING OPTIONS */}
+          {shippingOptions.length > 0 && (
+            <div className="flex flex-col gap-3 mt-4 mb-24 p-4 border border-blue-100 bg-blue-50/30 rounded-xl">
+              <h3 className="font-bold text-[var(--color-loja-text)] text-sm">Opções de Frete</h3>
+              <div className="flex flex-col gap-2">
+                {shippingOptions.map((opt) => (
+                  <label key={opt.id} className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all ${shippingOption?.id === opt.id ? 'border-[var(--color-loja-cta)] bg-[var(--color-loja-cta)]/5' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${shippingOption?.id === opt.id ? 'border-[var(--color-loja-cta)]' : 'border-gray-300'}`}>
+                        {shippingOption?.id === opt.id && <div className="w-2 h-2 rounded-full bg-[var(--color-loja-cta)]" />}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-sm text-[var(--color-loja-text)]">{opt.name}</span>
+                        <span className="text-xs text-gray-500">Até {opt.delivery_time} dias úteis</span>
+                      </div>
+                    </div>
+                    <span className="font-bold text-[var(--color-loja-text)]">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(opt.price)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
         </form>
       </div>
 
@@ -220,10 +263,10 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
         <button 
           type="submit"
           form="checkout-form"
-          disabled={loading || items.length === 0}
-          className="w-full bg-[var(--color-loja-cta)] text-white font-extrabold py-4 rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:scale-100"
+          disabled={loading || items.length === 0 || (!shippingOption && shippingOptions.length > 0)}
+          className="w-full bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] font-extrabold py-4 rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:scale-100"
         >
-          {loading ? "Redirecionando..." : "Ir para o Pagamento ➔"}
+          {loading ? "Redirecionando..." : `Pagar ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(items.reduce((acc, item) => acc + (item.price * item.quantity), 0) + (shippingOption ? shippingOption.price : 0))} ➔`}
         </button>
       </div>
     </div>
