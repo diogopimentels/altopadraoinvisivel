@@ -50,14 +50,25 @@ export async function POST(request: Request) {
     // 3. Integração com a API da InfinitePay
     const infinitepayTag = process.env.INFINITEPAY_TAG || "altopadraoinvisivel";
     
+    // Garante nome com pelo menos duas palavras (obrigatório em algumas APIs de pagamento)
+    const formattedName = customer.name.trim().includes(' ') ? customer.name.trim() : `${customer.name.trim()} Cliente`;
+    
+    // Formata o telefone (exige +55 se for BR)
+    let cleanPhone = customer.phone.replace(/\D/g, '');
+    if (cleanPhone.length === 10 || cleanPhone.length === 11) {
+      cleanPhone = `+55${cleanPhone}`;
+    } else if (!cleanPhone.startsWith('+')) {
+      cleanPhone = `+${cleanPhone}`;
+    }
+
     const infinitePayPayload = {
       handle: infinitepayTag,
       order_nsu: order_id,
       redirect_url: `${origin}/loja?success=true`,
       customer: {
-        name: customer.name,
+        name: formattedName,
         email: customer.email || "contato@altopadraoinvisivel.com.br",
-        phone_number: customer.phone.replace(/\D/g, '') // Apenas números
+        phone_number: cleanPhone
       },
       address: {
         cep: address.cep.replace(/\D/g, ''),
