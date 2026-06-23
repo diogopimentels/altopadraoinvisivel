@@ -6,6 +6,11 @@ export interface CartItem {
   price: number;
   quantity: number;
   imageUrl?: string;
+  size?: string;
+  weight?: number;
+  width?: number;
+  height?: number;
+  length?: number;
 }
 
 interface CartStore {

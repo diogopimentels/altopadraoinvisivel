@@ -12,7 +12,11 @@ export function ProductClient({ product }: { product: any }) {
       id: product.id, 
       name: product.name, 
       price: product.price, 
-      imageUrl: product.images && product.images.length > 0 ? product.images[0] : undefined 
+      imageUrl: product.images && product.images.length > 0 ? product.images[0] : undefined,
+      weight: product.weight,
+      width: product.width,
+      height: product.height,
+      length: product.length
     });
   };
 

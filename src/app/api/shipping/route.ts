@@ -9,37 +9,70 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "CEP de destino obrigatório" }, { status: 400 });
     }
 
-    // AQUI ENTRARÁ A LÓGICA DE CHAMADA PARA A API DO MELHOR ENVIO NO FUTURO
-    // POST https://www.melhorenvio.com.br/api/v2/me/shipment/calculate
-    // Usando o token do .env.local
+    // Real Melhor Envio API Call
+    const token = process.env.MELHOR_ENVIO_ACCESS_TOKEN;
+    if (!token) {
+      console.warn("Token do Melhor Envio não configurado, usando fallback.");
+      return NextResponse.json({ options: [] });
+    }
 
-    // POR ENQUANTO, RETORNAMOS OPÇÕES DE FRETE FALSAS PARA TESTARMOS A INTERFACE DE PAGAMENTO
-    // Vamos basear o preço no primeiro dígito do CEP só para ter uma variação
-    const firstDigit = parseInt(destinationCep.replace(/\D/g, '').charAt(0) || '0');
-    
-    // Simulação: Norte/Nordeste é mais caro
-    const basePac = firstDigit >= 4 && firstDigit <= 6 ? 45.90 : 25.90;
-    const baseSedex = firstDigit >= 4 && firstDigit <= 6 ? 75.90 : 45.90;
-
-    const mockShippingOptions = [
-      {
-        id: "pac-mock",
-        name: "PAC (Correios)",
-        price: basePac,
-        delivery_time: 7,
+    const payload = {
+      from: {
+        postal_code: process.env.STORE_CEP || "01001000" // Padrão SP caso não configurado
       },
-      {
-        id: "sedex-mock",
-        name: "Sedex (Correios)",
-        price: baseSedex,
-        delivery_time: 3,
-      }
-    ];
+      to: {
+        postal_code: destinationCep.replace(/\D/g, '')
+      },
+      products: items.map((item: any) => ({
+        id: item.id,
+        width: item.width || 20,
+        height: item.height || 15,
+        length: item.length || 20,
+        weight: item.weight || 0.5,
+        insurance_value: item.price,
+        quantity: item.quantity
+      }))
+    };
 
-    // Simula tempo de rede de 1 segundo para parecer real
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const url = process.env.MELHOR_ENVIO_ENVIRONMENT === 'sandbox' 
+      ? 'https://sandbox.melhorenvio.com.br/api/v2/me/shipment/calculate' 
+      : 'https://melhorenvio.com.br/api/v2/me/shipment/calculate';
 
-    return NextResponse.json({ options: mockShippingOptions });
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+        "User-Agent": "AltoPadraoInvisivel (suporte@altopadraoinvisivel.com.br)"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Melhor Envio API Error:", response.status, errText);
+      return NextResponse.json({ error: "Erro na API do Melhor Envio" }, { status: 500 });
+    }
+
+    const data = await response.json();
+
+    // Filtra apenas Correios (PAC e Sedex) para não poluir muito, 
+    // ou transportadoras específicas.
+    // IDs comuns: 1 = PAC, 2 = Sedex.
+    const allowedServices = [1, 2]; 
+
+    const shippingOptions = data
+      .filter((opt: any) => !opt.error && allowedServices.includes(opt.id))
+      .map((opt: any) => ({
+        id: String(opt.id),
+        name: opt.name,
+        price: parseFloat(opt.price),
+        delivery_time: opt.custom_delivery_time || opt.delivery_time,
+        company: opt.company?.name || "Correios"
+      }));
+
+    return NextResponse.json({ options: shippingOptions });
 
   } catch (error: any) {
     console.error("Erro na API de Frete:", error);
