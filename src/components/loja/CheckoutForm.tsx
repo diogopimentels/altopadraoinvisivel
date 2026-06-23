@@ -126,8 +126,47 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         <form id="checkout-form" onSubmit={handleCheckout} className="flex flex-col gap-4">
           
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-gray-700">1. Qual seu CEP? * {cepLoading && <span className="text-xs text-blue-500 font-normal">Buscando...</span>}</label>
+          {/* PERSONAL INFO - ALWAYS VISIBLE AT THE TOP */}
+          <div className="flex flex-col gap-4 mb-2">
+            <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">1. Seus Dados</h3>
+            
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-bold text-gray-700">Nome Completo *</label>
+              <input 
+                type="text" required 
+                value={form.name} onChange={e => setForm({...form, name: e.target.value})}
+                className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                placeholder="Seu nome"
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col gap-1 flex-1">
+                <label className="text-sm font-bold text-gray-700">Celular (WhatsApp) *</label>
+                <input 
+                  type="text" required 
+                  value={form.phone} onChange={e => setForm({...form, phone: e.target.value})}
+                  className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+              <div className="flex flex-col gap-1 flex-1">
+                <label className="text-sm font-bold text-gray-700">E-mail (Opcional)</label>
+                <input 
+                  type="email" 
+                  value={form.email} onChange={e => setForm({...form, email: e.target.value})}
+                  className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                  placeholder="seu@email.com"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="h-px bg-gray-200"></div>
+
+          <div className="flex flex-col gap-1 mt-2">
+            <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider mb-2">2. Entrega</h3>
+            <label className="text-sm font-bold text-gray-700">Qual seu CEP? * {cepLoading && <span className="text-xs text-blue-500 font-normal">Buscando...</span>}</label>
             <input 
               type="text" required maxLength={9}
               value={form.cep} 
@@ -231,44 +270,8 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
             </div>
           )}
 
-          {/* PERSONAL INFO - ONLY SHOWS IF SHIPPING IS SELECTED */}
-          {shippingOption && form.cep.replace(/\D/g, "").length === 8 && (
-            <div className="flex flex-col gap-4 mt-6 animate-in fade-in slide-in-from-top-4 duration-500 mb-24">
-              <div className="h-px bg-gray-200"></div>
-              <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">4. Quem vai receber?</h3>
-              
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-bold text-gray-700">Nome Completo *</label>
-                <input 
-                  type="text" required 
-                  value={form.name} onChange={e => setForm({...form, name: e.target.value})}
-                  className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
-                  placeholder="Seu nome"
-                />
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex flex-col gap-1 flex-1">
-                  <label className="text-sm font-bold text-gray-700">Celular (WhatsApp) *</label>
-                  <input 
-                    type="text" required 
-                    value={form.phone} onChange={e => setForm({...form, phone: e.target.value})}
-                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
-                    placeholder="(00) 00000-0000"
-                  />
-                </div>
-                <div className="flex flex-col gap-1 flex-1">
-                  <label className="text-sm font-bold text-gray-700">E-mail (Opcional)</label>
-                  <input 
-                    type="email" 
-                    value={form.email} onChange={e => setForm({...form, email: e.target.value})}
-                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
-                    placeholder="seu@email.com"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          {/* ESPAÇO NO FINAL */}
+          <div className="mb-24"></div>
 
         </form>
       </div>
@@ -277,7 +280,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
         <button 
           type="submit"
           form="checkout-form"
-          disabled={loading || items.length === 0 || (!shippingOption && shippingOptions.length > 0)}
+          disabled={loading || items.length === 0 || !shippingOption || !form.name || !form.phone || form.cep.replace(/\D/g, "").length !== 8}
           className="w-full bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] font-extrabold py-4 rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:scale-100"
         >
           {loading ? "Redirecionando..." : `Pagar ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(items.reduce((acc, item) => acc + (item.price * item.quantity), 0) + (shippingOption ? shippingOption.price : 0))} ➔`}
