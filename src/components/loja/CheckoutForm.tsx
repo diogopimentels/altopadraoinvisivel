@@ -108,7 +108,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
       const data = await res.json();
 
       if (data.url) {
-        // Redireciona para Stripe
+        // Redireciona para Mercado Pago Checkout Pro
         window.location.href = data.url;
       } else {
         alert(data.error || "Ocorreu um erro no checkout.");
@@ -282,6 +282,11 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                       <div className="flex flex-col">
                         <span className="font-bold text-[var(--color-loja-text)]">{opt.name}</span>
                         <span className="text-sm text-gray-500">Chega em até {opt.delivery_time} dias úteis</span>
+                        {opt.breakdown && opt.breakdown.length > 1 && (
+                          <span className="text-xs text-gray-400 mt-1">
+                            {opt.breakdown.map((b: any) => `${b.supplier_name}: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(b.price)}`).join(' + ')}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <span className="font-extrabold text-lg text-[var(--color-loja-text)] shrink-0">
@@ -298,7 +303,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
             <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl mt-6 animate-in fade-in slide-in-from-top-4 duration-500">
               <h3 className="font-bold text-red-800 text-sm">Ops! Problema com o Frete</h3>
               <p className="text-sm text-red-600 mt-1">{shippingError}</p>
-              <p className="text-xs text-red-500 mt-2">Dica: Se você estiver testando na sua máquina, reinicie o servidor para carregar as chaves corretas.</p>
+              <p className="text-xs text-red-500 mt-2">Confira se o produto tem fornecedor com CEP e se o token Melhor Envio está ativo.</p>
             </div>
           )}
 

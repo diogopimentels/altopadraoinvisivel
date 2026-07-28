@@ -23,12 +23,26 @@ export function proxy(request: NextRequest) {
   }
 
   // PROTEÇÃO CRÍTICA DAS ROTAS DE API
-  // Apenas GET e endpoints específicos (webhook, checkout e shipping) são públicos. Mutações nos produtos exigem token de admin.
+  // Públicos: webhooks, checkout, shipping (e GET em geral). Mutações exigem admin.
+  // debug-env nunca é público.
+  if (url.pathname.startsWith('/api/debug-env')) {
+    const adminToken = request.cookies.get('admin_token')?.value;
+    const expectedToken = process.env.ADMIN_PASSWORD;
+    if (!expectedToken || adminToken !== expectedToken) {
+      return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   if (
     url.pathname.startsWith('/api') && 
     !url.pathname.startsWith('/api/webhook') && 
+    !url.pathname.startsWith('/api/webhooks') && 
     !url.pathname.startsWith('/api/checkout') &&
-    !url.pathname.startsWith('/api/shipping')
+    !url.pathname.startsWith('/api/shipping') &&
+    !url.pathname.startsWith('/api/cron/')
   ) {
     if (request.method !== 'GET') {
       const adminToken = request.cookies.get('admin_token')?.value;

@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { supabase } from '@/lib/supabase';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { requireAdmin } from '@/lib/auth';
 import { z } from 'zod';
+import { cookies } from 'next/headers';
 
 const productSchema = z.object({
   id: z.string().optional(),
@@ -17,6 +19,7 @@ const productSchema = z.object({
   height: z.number().nullish().transform(val => val ?? 15),
   length: z.number().nullish().transform(val => val ?? 20),
   is_published: z.boolean().default(false),
+  supplier_id: z.string().min(1, "Selecione um fornecedor"),
 });
 
 export interface ProductData {
@@ -32,29 +35,31 @@ export interface ProductData {
   height?: number;
   length?: number;
   is_published: boolean;
+  supplier_id?: string | null;
 }
-
-import { cookies } from 'next/headers';
 
 export async function GET() {
   try {
     const cookieStore = await cookies();
     const adminToken = cookieStore.get('admin_token')?.value;
-    const isAdmin = adminToken === process.env.ADMIN_PASSWORD;
+    const isAdmin = Boolean(process.env.ADMIN_PASSWORD) && adminToken === process.env.ADMIN_PASSWORD;
 
     let query = supabase
       .from('products')
       .select('*')
       .order('created_at', { ascending: false });
 
-    // Se não for admin, mostra APENAS os produtos publicados
     if (!isAdmin) {
       query = query.eq('is_published', true);
     }
 
     const { data, error } = await query;
-
     if (error) throw error;
+
+    if (!isAdmin) {
+      const publicProducts = (data || []).map(({ supplier_id: _s, ...rest }) => rest);
+      return NextResponse.json(publicProducts);
+    }
 
     return NextResponse.json(data || []);
   } catch (error) {
@@ -65,9 +70,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if (auth !== true) return auth;
+
     const rawBody = await request.json();
-    
-    // Validação estrita do payload usando Zod
     const result = productSchema.safeParse(rawBody);
     if (!result.success) {
       return NextResponse.json(
@@ -75,21 +81,18 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    
+
     const body = result.data;
-    
-    // Se o produto está sendo setado como destaque, desmarca os outros
+
     if (body.isFeatured) {
       await supabaseAdmin
         .from('products')
         .update({ isFeatured: false })
-        .neq('id', '0'); // atualiza todos
+        .neq('id', '0');
     }
 
-    // Verifica se já tem ID, senão gera um
     if (!body.id) body.id = 'prod_' + Date.now();
 
-    // Faz o upsert (inserir ou atualizar)
     const { data, error } = await supabaseAdmin
       .from('products')
       .upsert({
@@ -104,7 +107,8 @@ export async function POST(request: Request) {
         width: body.width ?? 20,
         height: body.height ?? 15,
         length: body.length ?? 20,
-        is_published: body.is_published
+        is_published: body.is_published,
+        supplier_id: body.supplier_id,
       })
       .select()
       .single();
@@ -120,6 +124,9 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if (auth !== true) return auth;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

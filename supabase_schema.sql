@@ -42,7 +42,7 @@ create table if not exists orders (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Habilita segurança de acesso a nível de linha (apenas para garantir que só nós podemos editar se quiser no futuro)
+-- Habilita segurança de acesso a nível de linha (útil para garantir que só nós podemos editar se quiser no futuro)
 alter table products enable row level security;
 
 -- Política para todos poderem ler os produtos (vitrine)
@@ -90,3 +90,45 @@ alter table products add column if not exists is_published boolean default false
 -- Marca todos os produtos antigos como PUBLICADOS para não tirá-los do ar
 update products set is_published = true where is_published is false;
 
+-- =========================================================================
+-- PARTE 4: Fornecedores (dropshipping) + origem de frete
+-- =========================================================================
+
+create table if not exists suppliers (
+  id text primary key,
+  name text not null,
+  phone text,
+  email text,
+  cep text not null,
+  street text not null,
+  number text not null,
+  complement text,
+  neighborhood text not null,
+  city text not null,
+  state text not null,
+  notes text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table suppliers enable row level security;
+
+-- Sem policy pública de SELECT: PII (telefone/endereço/notas) só via service_role no backend.
+drop policy if exists "Allow public read suppliers" on suppliers;
+
+alter table products add column if not exists supplier_id text references suppliers(id) on delete set null;
+
+create index if not exists products_supplier_id_idx on products (supplier_id);
+
+-- Breakdown de frete multi-fornecedor no pedido (opcional)
+alter table orders add column if not exists shipping_breakdown jsonb;
+
+-- Tokens Melhor Envio (refresh automático). Só service_role.
+create table if not exists integration_tokens (
+  provider text primary key,
+  access_token text not null,
+  refresh_token text not null,
+  expires_at timestamptz not null,
+  updated_at timestamptz not null default timezone('utc'::text, now())
+);
+
+alter table integration_tokens enable row level security;

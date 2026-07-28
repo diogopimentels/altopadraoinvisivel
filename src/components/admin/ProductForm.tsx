@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProductData } from "@/app/api/products/route";
+import type { SupplierData } from "@/app/api/suppliers/route";
 import { Plus, Trash, X } from "@phosphor-icons/react";
 
 interface ProductFormProps {
@@ -14,6 +15,7 @@ interface ProductFormProps {
 export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName }: ProductFormProps) {
   const [saving, setSaving] = useState(false);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const [suppliers, setSuppliers] = useState<SupplierData[]>([]);
   
   const [form, setForm] = useState<ProductData>({
     id: initialData?.id || "",
@@ -28,7 +30,15 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
     height: initialData?.height ?? 15,
     length: initialData?.length ?? 20,
     is_published: initialData?.is_published ?? false,
+    supplier_id: initialData?.supplier_id || "",
   });
+
+  useEffect(() => {
+    fetch("/api/suppliers")
+      .then((r) => r.json())
+      .then((data) => setSuppliers(Array.isArray(data) ? data : []))
+      .catch(() => setSuppliers([]));
+  }, []);
 
   const handleAddImage = () => {
     if (form.images.length < 5) {
@@ -112,6 +122,28 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
             className="border border-gray-300 rounded-md px-3 py-2 text-[var(--color-loja-text)]"
             placeholder="Ex: Camiseta Essential"
           />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-semibold">Fornecedor (origem do frete) *</label>
+          <select
+            required
+            value={form.supplier_id || ""}
+            onChange={(e) => setForm({ ...form, supplier_id: e.target.value })}
+            className="border border-gray-300 rounded-md px-3 py-2 text-[var(--color-loja-text)] bg-white"
+          >
+            <option value="">Selecione um fornecedor</option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} — CEP {s.cep}
+              </option>
+            ))}
+          </select>
+          {suppliers.length === 0 && (
+            <p className="text-xs text-amber-700 mt-1">
+              Cadastre um fornecedor na aba Fornecedores antes de salvar o produto.
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">

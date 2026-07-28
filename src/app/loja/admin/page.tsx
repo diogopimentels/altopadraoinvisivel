@@ -4,24 +4,38 @@ import { useEffect, useState } from "react";
 import { ProductData } from "@/app/api/products/route";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { OrdersList } from "@/components/admin/OrdersList";
-import { Plus, Star, PencilSimple, Trash, Storefront, ShoppingBag } from "@phosphor-icons/react";
+import { Plus, Star, PencilSimple, Trash, Storefront, ShoppingBag, Truck } from "@phosphor-icons/react";
 import { logoutAction } from "./actions";
+import { SuppliersList } from "@/components/admin/SuppliersList";
 
 export default function AdminPage() {
   const [products, setProducts] = useState<ProductData[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<ProductData | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'suppliers'>('products');
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
-    const res = await fetch("/api/products");
-    const data = await res.json();
-    setProducts(data);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/products");
+      const data = await res.json();
+      if (!res.ok) {
+        console.error("Erro ao carregar produtos:", data);
+        alert(data.error || "Erro ao carregar produtos. Verifique SUPABASE_SERVICE_ROLE_KEY no .env.local");
+        setProducts([]);
+        return;
+      }
+      setProducts(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao conectar com o servidor.");
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -127,18 +141,26 @@ export default function AdminPage() {
       </div>
 
       {/* TABS */}
-      <div className="flex gap-2 border-b border-gray-200 pb-1 mb-2">
+      <div className="flex gap-2 border-b border-gray-200 pb-1 mb-2 overflow-x-auto">
         <button 
           onClick={() => setActiveTab('products')}
-          className={`flex items-center gap-2 px-4 py-2 font-bold text-sm transition-all border-b-2 ${
+          className={`flex items-center gap-2 px-4 py-2 font-bold text-sm transition-all border-b-2 shrink-0 ${
             activeTab === 'products' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'
           }`}
         >
           <Storefront size={18} weight={activeTab === 'products' ? 'fill' : 'regular'} /> Produtos
         </button>
         <button 
+          onClick={() => setActiveTab('suppliers')}
+          className={`flex items-center gap-2 px-4 py-2 font-bold text-sm transition-all border-b-2 shrink-0 ${
+            activeTab === 'suppliers' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          <Truck size={18} weight={activeTab === 'suppliers' ? 'fill' : 'regular'} /> Fornecedores
+        </button>
+        <button 
           onClick={() => setActiveTab('orders')}
-          className={`flex items-center gap-2 px-4 py-2 font-bold text-sm transition-all border-b-2 ${
+          className={`flex items-center gap-2 px-4 py-2 font-bold text-sm transition-all border-b-2 shrink-0 ${
             activeTab === 'orders' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'
           }`}
         >
@@ -148,6 +170,8 @@ export default function AdminPage() {
 
       {activeTab === 'orders' ? (
         <OrdersList />
+      ) : activeTab === 'suppliers' ? (
+        <SuppliersList />
       ) : (
         <div className="w-full">
           {isAddingNew || editingProduct ? (
@@ -255,6 +279,11 @@ export default function AdminPage() {
                           🚧 Rascunho
                         </span>
                       )}
+                      {!product.supplier_id && (
+                        <span className="bg-red-100 text-red-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded shrink-0">
+                          Sem fornecedor
+                        </span>
+                      )}
                     </h3>
                     <span className="font-extrabold text-[var(--color-loja-text)] mt-1">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
@@ -276,7 +305,7 @@ export default function AdminPage() {
                         });
                         if (!res.ok) throw new Error("Falha na API");
                       } catch (e) {
-                        alert("Erro ao alterar o status. Tente novamente.");
+                        alert("Falta SUPABASE_SERVICE_ROLE_KEY no .env.local. Sem ela não dá pra salvar/publicar.");
                         await fetchProducts(); // reverts UI
                       }
                     }}

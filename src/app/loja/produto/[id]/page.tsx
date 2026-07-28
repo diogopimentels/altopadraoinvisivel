@@ -16,7 +16,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   let query = supabase
     .from('products')
-    .select('*')
+    .select(
+      isAdmin
+        ? '*'
+        : 'id, name, price, images, isFeatured, category, description, weight, width, height, length, is_published, created_at'
+    )
     .eq('id', id);
 
   if (!isAdmin) {

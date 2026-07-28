@@ -16,7 +16,8 @@ export function ProductClient({ product }: { product: any }) {
       weight: product.weight,
       width: product.width,
       height: product.height,
-      length: product.length
+      length: product.length,
+      supplier_id: product.supplier_id,
     });
   };
 

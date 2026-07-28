@@ -9,21 +9,45 @@ interface ProductCardProps {
   name: string;
   price: number;
   images?: string[];
+  weight?: number;
+  width?: number;
+  height?: number;
+  length?: number;
+  supplier_id?: string | null;
 }
 
-export function ProductCard({ id, name, price, images }: ProductCardProps) {
+export function ProductCard({
+  id,
+  name,
+  price,
+  images,
+  weight,
+  width,
+  height,
+  length,
+  supplier_id,
+}: ProductCardProps) {
   const { addItem } = useCartStore();
   const [currentImage, setCurrentImage] = useState(0);
 
   const handleBuy = () => {
-    addItem({ id, name, price, imageUrl: images && images.length > 0 ? images[0] : undefined });
+    addItem({
+      id,
+      name,
+      price,
+      imageUrl: images && images.length > 0 ? images[0] : undefined,
+      weight,
+      width,
+      height,
+      length,
+      supplier_id,
+    });
   };
 
   return (
     <div className="flex flex-col gap-3 w-full group relative">
       <Link href={`/produto/${id}`} className="absolute inset-0 z-0" aria-label={`Ver detalhes de ${name}`} />
       
-      {/* Product Image Area */}
       <div className="aspect-square w-full bg-[var(--color-loja-surface)] rounded-md overflow-hidden relative border border-gray-100">
         <Link href={`/produto/${id}`} className="absolute inset-0 z-10" />
         {images && images.length > 0 ? (
@@ -56,7 +80,6 @@ export function ProductCard({ id, name, price, images }: ProductCardProps) {
         )}
       </div>
 
-      {/* Product Info & Action */}
       <div className="flex justify-between items-start">
         <div className="flex flex-col">
           <h3 className="font-semibold text-base leading-tight text-[var(--color-loja-text)]">{name}</h3>

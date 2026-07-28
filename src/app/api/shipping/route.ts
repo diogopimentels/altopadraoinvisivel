@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { quoteShipping } from '@/lib/shippingQuote';
 
 export async function POST(request: Request) {
   try {
@@ -6,84 +7,37 @@ export async function POST(request: Request) {
     const { destinationCep, items } = body;
 
     if (!destinationCep) {
-      return NextResponse.json({ error: "CEP de destino obrigatório" }, { status: 400 });
+      return NextResponse.json({ error: 'CEP de destino obrigatório' }, { status: 400 });
     }
 
-    // Real Melhor Envio API Call
-    const token = process.env.MELHOR_ENVIO_ACCESS_TOKEN;
-    if (!token) {
-      console.warn("Token do Melhor Envio não configurado, usando fallback.");
-      return NextResponse.json({ options: [] });
+    if (!items || items.length === 0) {
+      return NextResponse.json({ error: 'Carrinho vazio' }, { status: 400 });
     }
 
-    const payload = {
-      from: {
-        postal_code: process.env.STORE_CEP || "01001000" // Padrão SP caso não configurado
-      },
-      to: {
-        postal_code: destinationCep.replace(/\D/g, '')
-      },
-      products: items.map((item: any) => ({
-        id: item.id,
-        width: item.width || 20,
-        height: item.height || 15,
-        length: item.length || 20,
-        weight: item.weight || 0.5,
-        insurance_value: item.price,
-        quantity: item.quantity
-      }))
-    };
+    // Só aceita id + quantity do cliente; preços/dims/CEP vêm do banco
+    const safeItems = (items as any[]).map((item) => ({
+      id: String(item.id),
+      quantity: Number(item.quantity) || 1,
+    }));
 
-    const url = process.env.MELHOR_ENVIO_ENVIRONMENT === 'sandbox' 
-      ? 'https://sandbox.melhorenvio.com.br/api/v2/me/shipment/calculate' 
-      : 'https://melhorenvio.com.br/api/v2/me/shipment/calculate';
+    const result = await quoteShipping(String(destinationCep), safeItems);
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-        "User-Agent": "AltoPadraoInvisivel (suporte@altopadraoinvisivel.com.br)"
-      },
-      body: JSON.stringify(payload),
-      cache: "no-store"
+    if (!result.ok) {
+      return NextResponse.json(
+        { options: [], error: result.error, details: result.details },
+        { status: 200 }
+      );
+    }
+
+    return NextResponse.json({
+      options: result.options,
+      suppliers_count: result.suppliers_count,
     });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("Melhor Envio API Error:", response.status, errText);
-      return NextResponse.json({ error: "Erro na API do Melhor Envio" }, { status: 500 });
-    }
-
-    const melhorenvioData = await response.json();
-
-    // Filtra apenas Correios (PAC e Sedex) para não poluir muito, 
-    // ou transportadoras específicas.
-    // IDs comuns: 1 = PAC, 2 = Sedex.
-    const allowedServices = [1, 2]; 
-
-    const options = melhorenvioData
-      .filter((opt: any) => !opt.error && allowedServices.includes(opt.id))
-      .map((opt: any) => ({
-        id: String(opt.id),
-        name: opt.name,
-        price: parseFloat(opt.price),
-        delivery_time: opt.custom_delivery_time || opt.delivery_time,
-        company: opt.company?.name || "Correios"
-      }));
-
-    if (options.length === 0) {
-      return NextResponse.json({ 
-        options: [], 
-        error: "Nenhuma opção de frete disponível para este CEP." 
-      });
-    }
-
-    return NextResponse.json({ options });
-
   } catch (error: any) {
-    console.error("Erro na API de Frete:", error);
-    return NextResponse.json({ error: "Erro interno ao calcular frete" }, { status: 500 });
+    console.error('Erro na API de Frete:', error);
+    return NextResponse.json(
+      { options: [], error: error?.message || 'Erro interno ao calcular frete' },
+      { status: 500 }
+    );
   }
 }

@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { supabase } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/auth';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if (auth !== true) return auth;
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
 
@@ -22,12 +26,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Tipo de arquivo não suportado. Apenas JPG, PNG ou WEBP são aceitos." }, { status: 400 });
     }
 
+    // Evita path traversal no nome
+    const safeBase = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
     const buffer = Buffer.from(await file.arrayBuffer());
-    
-    // Gera nome de arquivo único
-    const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-    
-    const { data, error } = await supabaseAdmin.storage
+    const filename = `${Date.now()}-${safeBase}`;
+
+    const { error } = await supabaseAdmin.storage
       .from('product-images')
       .upload(filename, buffer, {
         contentType: file.type,
@@ -36,7 +40,6 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
-    // Pega a URL pública permanente
     const { data: { publicUrl } } = supabase.storage
       .from('product-images')
       .getPublicUrl(filename);

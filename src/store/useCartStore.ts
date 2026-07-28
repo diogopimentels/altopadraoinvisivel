@@ -11,13 +11,23 @@ export interface CartItem {
   width?: number;
   height?: number;
   length?: number;
+  supplier_id?: string | null;
 }
+
+export type ShippingOption = {
+  id: string;
+  name: string;
+  price: number;
+  delivery_time?: number;
+  company?: string;
+  breakdown?: { supplier_id: string; supplier_name: string; price: number }[];
+};
 
 interface CartStore {
   items: CartItem[];
   isOpen: boolean;
-  shippingOption: { id: string; name: string; price: number; delivery_time?: number; company?: string } | null;
-  setShippingOption: (option: { id: string; name: string; price: number; delivery_time?: number; company?: string } | null) => void;
+  shippingOption: ShippingOption | null;
+  setShippingOption: (option: ShippingOption | null) => void;
   addItem: (item: Omit<CartItem, 'quantity'>) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -44,12 +54,14 @@ export const useCartStore = create<CartStore>((set, get) => ({
               ? { ...item, quantity: item.quantity + 1 }
               : item
           ),
-          isOpen: true, // Always open cart when adding
+          isOpen: true,
+          shippingOption: null,
         };
       }
-      return { 
+      return {
         items: [...state.items, { ...newItem, quantity: 1 }],
-        isOpen: true
+        isOpen: true,
+        shippingOption: null,
       };
     });
   },
@@ -57,25 +69,27 @@ export const useCartStore = create<CartStore>((set, get) => ({
   removeItem: (id) => {
     set((state) => ({
       items: state.items.filter((item) => item.id !== id),
+      shippingOption: null,
     }));
   },
 
   updateQuantity: (id, quantity) => {
     set((state) => {
       if (quantity <= 0) {
-        return { items: state.items.filter((item) => item.id !== id) };
+        return { items: state.items.filter((item) => item.id !== id), shippingOption: null };
       }
       return {
         items: state.items.map((item) =>
           item.id === id ? { ...item, quantity } : item
         ),
+        shippingOption: null,
       };
     });
   },
 
   toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
-  
-  clearCart: () => set({ items: [] }),
+
+  clearCart: () => set({ items: [], shippingOption: null }),
 
   totalPrice: () => {
     return get().items.reduce((total, item) => total + item.price * item.quantity, 0);
@@ -83,5 +97,5 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
   totalItems: () => {
     return get().items.reduce((total, item) => total + item.quantity, 0);
-  }
+  },
 }));

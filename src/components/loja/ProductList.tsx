@@ -52,6 +52,11 @@ export function ProductList({ products }: ProductListProps) {
             name={product.name}
             price={product.price}
             images={product.images}
+            weight={product.weight}
+            width={product.width}
+            height={product.height}
+            length={product.length}
+            supplier_id={product.supplier_id}
           />
         ))}
         {filteredProducts.length === 0 && (

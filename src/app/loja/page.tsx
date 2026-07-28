@@ -15,7 +15,7 @@ export default async function LojaPage() {
 
     let query = supabase
       .from('products')
-      .select('*')
+      .select('id, name, price, images, isFeatured, category, description, weight, width, height, length, is_published, created_at')
       .order('created_at', { ascending: false });
       
     if (!isAdmin) {
