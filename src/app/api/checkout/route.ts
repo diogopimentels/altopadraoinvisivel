@@ -141,13 +141,17 @@ export async function POST(request: Request) {
         unit_price: Number(item.price.toFixed(2)),
         currency_id: 'BRL',
       })),
-      {
-        id: 'shipping',
-        title: `Frete: ${trustedShipping.name}`.slice(0, 256),
-        quantity: 1,
-        unit_price: Number(shipping_cost.toFixed(2)),
-        currency_id: 'BRL',
-      },
+      ...(shipping_cost > 0
+        ? [
+            {
+              id: 'shipping',
+              title: `Frete: ${trustedShipping.name}`.slice(0, 256),
+              quantity: 1,
+              unit_price: Number(shipping_cost.toFixed(2)),
+              currency_id: 'BRL',
+            },
+          ]
+        : []),
     ];
 
     const preference: Record<string, unknown> = {

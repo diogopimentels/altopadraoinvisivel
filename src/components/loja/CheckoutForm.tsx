@@ -292,7 +292,9 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                       </div>
                     </div>
                     <span className="font-extrabold text-lg text-[var(--color-loja-text)] shrink-0">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(opt.price)}
+                      {opt.price <= 0
+                        ? 'Grátis'
+                        : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(opt.price)}
                     </span>
                   </button>
                 ))}

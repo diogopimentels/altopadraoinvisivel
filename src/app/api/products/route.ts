@@ -20,6 +20,7 @@ const productSchema = z.object({
   length: z.number().nullish().transform(val => val ?? 20),
   is_published: z.boolean().default(false),
   supplier_id: z.string().min(1, "Selecione um fornecedor"),
+  free_shipping: z.boolean().default(false),
 });
 
 export interface ProductData {
@@ -36,6 +37,7 @@ export interface ProductData {
   length?: number;
   is_published: boolean;
   supplier_id?: string | null;
+  free_shipping?: boolean;
 }
 
 export async function GET() {
@@ -109,6 +111,7 @@ export async function POST(request: Request) {
         length: body.length ?? 20,
         is_published: body.is_published,
         supplier_id: body.supplier_id,
+        free_shipping: body.free_shipping ?? false,
       })
       .select()
       .single();

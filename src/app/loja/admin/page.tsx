@@ -284,6 +284,11 @@ export default function AdminPage() {
                           Sem fornecedor
                         </span>
                       )}
+                      {product.free_shipping && (
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded shrink-0">
+                          Frete grátis
+                        </span>
+                      )}
                     </h3>
                     <span className="font-extrabold text-[var(--color-loja-text)] mt-1">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}

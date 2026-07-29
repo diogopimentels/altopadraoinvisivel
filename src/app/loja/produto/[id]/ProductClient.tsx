@@ -66,6 +66,11 @@ export function ProductClient({ product }: { product: any }) {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--color-loja-text)] leading-tight">
             {product.name}
           </h1>
+          {product.free_shipping && (
+            <span className="inline-block mt-2 bg-emerald-600 text-white text-[10px] uppercase font-bold px-2.5 py-1 rounded">
+              Frete grátis
+            </span>
+          )}
           <p className="text-xl sm:text-2xl font-medium text-[var(--color-loja-text)] mt-3">
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
           </p>

@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { getMelhorEnvioAccessToken } from '@/lib/melhorEnvioAuth';
-import { normalizeAllowedServiceIds } from '@/lib/melhorEnvioServices';
+import { ME_SERVICES, normalizeAllowedServiceIds } from '@/lib/melhorEnvioServices';
 
 export type ShipItemInput = {
   id: string;
@@ -113,16 +113,6 @@ export async function quoteShipping(
   destinationCep: string,
   items: ShipItemInput[]
 ): Promise<QuoteShippingResult> {
-  let token: string;
-  try {
-    token = await getMelhorEnvioAccessToken();
-  } catch (e: any) {
-    return {
-      ok: false,
-      error: e?.message || 'Frete não configurado (token Melhor Envio ausente).',
-    };
-  }
-
   if (!items.length) {
     return { ok: false, error: 'Carrinho vazio' };
   }
@@ -132,7 +122,7 @@ export async function quoteShipping(
 
   const { data: productsDb, error: productsError } = await admin
     .from('products')
-    .select('id, supplier_id, weight, width, height, length, name, price, is_published')
+    .select('id, supplier_id, weight, width, height, length, name, price, is_published, free_shipping')
     .in('id', productIds);
 
   if (productsError) throw productsError;
@@ -171,6 +161,11 @@ export async function quoteShipping(
       },
     ])
   );
+
+  type EnrichedItem = Required<
+    Pick<ShipItemInput, 'id' | 'quantity' | 'price' | 'weight' | 'width' | 'height' | 'length'>
+  > & { free_shipping: boolean };
+
   const groups = new Map<
     string,
     {
@@ -180,7 +175,7 @@ export async function quoteShipping(
         cep: string;
         allowed_service_ids: number[];
       };
-      items: Required<Pick<ShipItemInput, 'id' | 'quantity' | 'price' | 'weight' | 'width' | 'height' | 'length'>>[];
+      items: EnrichedItem[];
     }
   >();
   const routeErrors: string[] = [];
@@ -202,7 +197,7 @@ export async function quoteShipping(
       return { ok: false, error: `Fornecedor do produto "${dbProduct.name}" sem CEP.` };
     }
 
-    const enriched = {
+    const enriched: EnrichedItem = {
       id: dbProduct.id,
       quantity,
       price: Number(dbProduct.price),
@@ -210,6 +205,7 @@ export async function quoteShipping(
       width: Number(dbProduct.width ?? 20),
       height: Number(dbProduct.height ?? 15),
       length: Number(dbProduct.length ?? 20),
+      free_shipping: Boolean(dbProduct.free_shipping),
     };
 
     const existing = groups.get(supplierId);
@@ -217,8 +213,75 @@ export async function quoteShipping(
     else groups.set(supplierId, { supplier, items: [enriched] });
   }
 
+  const allItemsFree = [...groups.values()].every((g) => g.items.every((i) => i.free_shipping));
+  if (allItemsFree) {
+    return {
+      ok: true,
+      options: [
+        {
+          id: 'free',
+          name: 'Frete Grátis',
+          price: 0,
+          delivery_time: 7,
+          company: 'Loja',
+          breakdown: [...groups.values()].map((g) => ({
+            supplier_id: g.supplier.id,
+            supplier_name: g.supplier.name,
+            price: 0,
+          })),
+        },
+      ],
+      suppliers_count: groups.size,
+    };
+  }
+
+  let token: string;
+  try {
+    token = await getMelhorEnvioAccessToken();
+  } catch (e: any) {
+    return {
+      ok: false,
+      error: e?.message || 'Frete não configurado (token Melhor Envio ausente).',
+    };
+  }
+
   const baseUrl = meBaseUrl();
   const merged = new Map<number, ShippingQuoteOption>();
+
+  function applyGroupContribution(
+    serviceId: number,
+    name: string,
+    company: string,
+    price: number,
+    delivery: number,
+    supplier: { id: string; name: string }
+  ) {
+    const current = merged.get(serviceId);
+    if (!current) {
+      merged.set(serviceId, {
+        id: String(serviceId),
+        name,
+        price,
+        delivery_time: delivery,
+        company,
+        breakdown: [
+          {
+            supplier_id: supplier.id,
+            supplier_name: supplier.name,
+            price,
+          },
+        ],
+      });
+    } else {
+      current.price += price;
+      current.delivery_time = Math.max(current.delivery_time, delivery);
+      current.breakdown.push({
+        supplier_id: supplier.id,
+        supplier_name: supplier.name,
+        price,
+      });
+    }
+  }
 
   async function calculateWithAuthRetry(
     originCep: string,
@@ -228,12 +291,9 @@ export async function quoteShipping(
       return await calculateFromOrigin(token, baseUrl, originCep, destinationCep, products);
     } catch (err: any) {
       const msg = String(err?.message || '');
-      const unauthenticated =
-        err?.status === 401 ||
-        /unauthenticated/i.test(msg);
+      const unauthenticated = err?.status === 401 || /unauthenticated/i.test(msg);
 
       if (unauthenticated) {
-        // Docs ME: guardar a req → refresh → repetir a mesma chamada
         token = await getMelhorEnvioAccessToken({ forceRefresh: true });
         return calculateFromOrigin(token, baseUrl, originCep, destinationCep, products);
       }
@@ -250,7 +310,26 @@ export async function quoteShipping(
       continue;
     }
 
-    const meData = await calculateWithAuthRetry(group.supplier.cep, group.items);
+    const paidItems = group.items.filter((i) => !i.free_shipping);
+    const groupIsFree = paidItems.length === 0;
+
+    // Grupo só com frete grátis: contribui R$ 0 em todos os serviços habilitados
+    if (groupIsFree) {
+      for (const serviceId of allowedServices) {
+        const meta = ME_SERVICES.find((s) => s.id === serviceId);
+        applyGroupContribution(
+          serviceId,
+          meta?.name || `Serviço ${serviceId}`,
+          meta?.company || 'Transportadora',
+          0,
+          7,
+          group.supplier
+        );
+      }
+      continue;
+    }
+
+    const meData = await calculateWithAuthRetry(group.supplier.cep, paidItems);
 
     let groupHadOption = false;
     for (const opt of meData) {
@@ -260,37 +339,19 @@ export async function quoteShipping(
       }
       if (!allowedServices.includes(opt.id) || opt.price == null) continue;
 
-      groupHadOption = true;
       const price = parseFloat(String(opt.price));
       if (Number.isNaN(price)) continue;
 
+      groupHadOption = true;
       const delivery = opt.custom_delivery_time || opt.delivery_time || 0;
-      const current = merged.get(opt.id);
-
-      if (!current) {
-        merged.set(opt.id, {
-          id: String(opt.id),
-          name: opt.name,
-          price,
-          delivery_time: delivery,
-          company: opt.company?.name || 'Transportadora',
-          breakdown: [
-            {
-              supplier_id: group.supplier.id,
-              supplier_name: group.supplier.name,
-              price,
-            },
-          ],
-        });
-      } else {
-        current.price += price;
-        current.delivery_time = Math.max(current.delivery_time, delivery);
-        current.breakdown.push({
-          supplier_id: group.supplier.id,
-          supplier_name: group.supplier.name,
-          price,
-        });
-      }
+      applyGroupContribution(
+        opt.id,
+        opt.name,
+        opt.company?.name || 'Transportadora',
+        price,
+        delivery,
+        group.supplier
+      );
     }
 
     if (!groupHadOption) {

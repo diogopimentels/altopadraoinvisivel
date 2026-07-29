@@ -31,6 +31,7 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
     length: initialData?.length ?? 20,
     is_published: initialData?.is_published ?? false,
     supplier_id: initialData?.supplier_id || "",
+    free_shipping: initialData?.free_shipping ?? false,
   });
 
   useEffect(() => {
@@ -222,6 +223,35 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
               />
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, free_shipping: !form.free_shipping })}
+            className={`mt-4 w-full flex items-center justify-between gap-3 p-3 border-2 rounded-xl text-left transition-colors ${
+              form.free_shipping
+                ? "border-emerald-600 bg-emerald-50"
+                : "border-gray-200 bg-white hover:border-gray-300"
+            }`}
+          >
+            <span className="flex flex-col min-w-0">
+              <span className="font-bold text-sm">Frete grátis</span>
+              <span className="text-xs text-gray-500">
+                Cliente não paga frete deste produto no checkout (custo absorvido pela loja).
+              </span>
+            </span>
+            <span
+              className={`shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                form.free_shipping ? "bg-emerald-600" : "bg-gray-300"
+              }`}
+              aria-hidden
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  form.free_shipping ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
         </div>
 
         <div className="flex flex-col gap-3">

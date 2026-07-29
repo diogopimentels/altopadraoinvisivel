@@ -14,6 +14,7 @@ interface ProductCardProps {
   height?: number;
   length?: number;
   supplier_id?: string | null;
+  free_shipping?: boolean;
 }
 
 export function ProductCard({
@@ -26,6 +27,7 @@ export function ProductCard({
   height,
   length,
   supplier_id,
+  free_shipping,
 }: ProductCardProps) {
   const { addItem } = useCartStore();
   const [currentImage, setCurrentImage] = useState(0);
@@ -50,6 +52,11 @@ export function ProductCard({
       
       <div className="aspect-square w-full bg-[var(--color-loja-surface)] rounded-md overflow-hidden relative border border-gray-100">
         <Link href={`/produto/${id}`} className="absolute inset-0 z-10" />
+        {free_shipping && (
+          <span className="absolute top-2 left-2 z-20 bg-emerald-600 text-white text-[10px] uppercase font-bold px-2 py-1 rounded">
+            Frete grátis
+          </span>
+        )}
         {images && images.length > 0 ? (
           <>
             <img 
