@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { requireAdmin } from '@/lib/auth';
+import { normalizeAllowedServiceIds } from '@/lib/melhorEnvioServices';
 import { z } from 'zod';
 
 const supplierSchema = z.object({
@@ -17,6 +18,7 @@ const supplierSchema = z.object({
   city: z.string().min(1, 'Cidade obrigatória').trim(),
   state: z.string().min(2, 'Estado obrigatório').max(2).trim(),
   notes: z.string().nullish(),
+  allowed_service_ids: z.array(z.number().int()).optional(),
 });
 
 export type SupplierData = {
@@ -32,6 +34,7 @@ export type SupplierData = {
   city: string;
   state: string;
   notes?: string | null;
+  allowed_service_ids?: number[];
 };
 
 export async function GET() {
@@ -45,7 +48,13 @@ export async function GET() {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return NextResponse.json(data || []);
+
+    const suppliers = (data || []).map((s) => ({
+      ...s,
+      allowed_service_ids: normalizeAllowedServiceIds(s.allowed_service_ids),
+    }));
+
+    return NextResponse.json(suppliers);
   } catch (error: any) {
     console.error('Erro ao ler fornecedores:', error);
     return NextResponse.json(
@@ -77,6 +86,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'CEP inválido' }, { status: 400 });
     }
 
+    if (Array.isArray(rawBody.allowed_service_ids) && rawBody.allowed_service_ids.length === 0) {
+      return NextResponse.json(
+        { error: 'Selecione ao menos uma transportadora (Correios ou Jadlog).' },
+        { status: 400 }
+      );
+    }
+    const allowed_service_ids = normalizeAllowedServiceIds(body.allowed_service_ids);
+
     const { data, error } = await supabaseAdmin
       .from('suppliers')
       .upsert({
@@ -92,12 +109,19 @@ export async function POST(request: Request) {
         city: body.city,
         state: body.state.toUpperCase(),
         notes: body.notes || null,
+        allowed_service_ids,
       })
       .select()
       .single();
 
     if (error) throw error;
-    return NextResponse.json({ success: true, supplier: data });
+    return NextResponse.json({
+      success: true,
+      supplier: {
+        ...data,
+        allowed_service_ids: normalizeAllowedServiceIds(data.allowed_service_ids),
+      },
+    });
   } catch (error: any) {
     console.error('Erro ao salvar fornecedor:', error);
     return NextResponse.json(

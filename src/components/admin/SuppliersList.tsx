@@ -3,6 +3,14 @@
 import { useEffect, useState } from "react";
 import { Plus, PencilSimple, Trash, X } from "@phosphor-icons/react";
 import type { SupplierData } from "@/app/api/suppliers/route";
+import {
+  DEFAULT_ALLOWED_SERVICE_IDS,
+  ME_CARRIER_GROUPS,
+  labelForServiceIds,
+  normalizeAllowedServiceIds,
+  serviceIdsFromCarrierKeys,
+  carrierKeysFromServiceIds,
+} from "@/lib/melhorEnvioServices";
 
 const emptyForm: Omit<SupplierData, "id"> & { id?: string } = {
   name: "",
@@ -16,6 +24,7 @@ const emptyForm: Omit<SupplierData, "id"> & { id?: string } = {
   city: "",
   state: "",
   notes: "",
+  allowed_service_ids: [...DEFAULT_ALLOWED_SERVICE_IDS],
 };
 
 export function SuppliersList() {
@@ -77,8 +86,22 @@ export function SuppliersList() {
   };
 
   const openEdit = (s: SupplierData) => {
-    setForm({ ...s });
+    setForm({
+      ...s,
+      allowed_service_ids: normalizeAllowedServiceIds(s.allowed_service_ids),
+    });
     setEditing(true);
+  };
+
+  const selectedCarriers = carrierKeysFromServiceIds(
+    normalizeAllowedServiceIds(form.allowed_service_ids)
+  );
+
+  const toggleCarrier = (key: string) => {
+    const next = selectedCarriers.includes(key)
+      ? selectedCarriers.filter((k) => k !== key)
+      : [...selectedCarriers, key];
+    setForm({ ...form, allowed_service_ids: serviceIdsFromCarrierKeys(next) });
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -239,6 +262,42 @@ export function SuppliersList() {
           </div>
         </div>
 
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-bold">Transportadoras *</label>
+          <p className="text-xs text-gray-500">
+            Só essas opções aparecem no checkout para produtos deste fornecedor.
+          </p>
+          <div className="flex flex-col gap-2">
+            {ME_CARRIER_GROUPS.map((group) => {
+              const checked = selectedCarriers.includes(group.key);
+              return (
+                <label
+                  key={group.key}
+                  className={`flex items-start gap-3 p-3 border-2 rounded-xl cursor-pointer transition-colors ${
+                    checked
+                      ? "border-[var(--color-loja-cta)] bg-[var(--color-loja-cta)]/5"
+                      : "border-gray-200 bg-white"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={checked}
+                    onChange={() => toggleCarrier(group.key)}
+                  />
+                  <span className="flex flex-col">
+                    <span className="font-bold text-sm">{group.label}</span>
+                    <span className="text-xs text-gray-500">{group.description}</span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+          {selectedCarriers.length === 0 && (
+            <p className="text-xs text-red-600 font-medium">Selecione ao menos uma transportadora.</p>
+          )}
+        </div>
+
         <div className="flex flex-col gap-1">
           <label className="text-sm font-bold">Observações</label>
           <textarea
@@ -251,7 +310,7 @@ export function SuppliersList() {
 
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || selectedCarriers.length === 0}
           className="bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] font-bold py-3 rounded-xl disabled:opacity-50"
         >
           {saving ? "Salvando..." : "Salvar fornecedor"}
@@ -284,6 +343,9 @@ export function SuppliersList() {
                 <h3 className="font-bold text-gray-800">{s.name}</h3>
                 <p className="text-sm text-gray-500 mt-1">
                   CEP {s.cep} — {s.street}, {s.number} — {s.neighborhood}, {s.city}/{s.state}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Frete: {labelForServiceIds(normalizeAllowedServiceIds(s.allowed_service_ids))}
                 </p>
               </div>
               <div className="flex gap-2 justify-end">

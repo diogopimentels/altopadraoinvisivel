@@ -14,6 +14,7 @@ create table if not exists suppliers (
   city text not null,
   state text not null,
   notes text,
+  allowed_service_ids integer[] not null default array[1, 2],
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -23,6 +24,9 @@ alter table suppliers enable row level security;
 drop policy if exists "Allow public read suppliers" on suppliers;
 
 alter table products add column if not exists supplier_id text references suppliers(id) on delete set null;
+
+alter table suppliers
+  add column if not exists allowed_service_ids integer[] not null default array[1, 2];
 
 create index if not exists products_supplier_id_idx on products (supplier_id);
 

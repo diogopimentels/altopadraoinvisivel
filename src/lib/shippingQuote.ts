@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { getMelhorEnvioAccessToken } from '@/lib/melhorEnvioAuth';
+import { normalizeAllowedServiceIds } from '@/lib/melhorEnvioServices';
 
 export type ShipItemInput = {
   id: string;
@@ -154,16 +155,31 @@ export async function quoteShipping(
 
   const { data: suppliers, error: suppliersError } = await admin
     .from('suppliers')
-    .select('id, name, cep')
+    .select('id, name, cep, allowed_service_ids')
     .in('id', supplierIds);
 
   if (suppliersError) throw suppliersError;
 
-  const supplierMap = new Map((suppliers || []).map((s) => [s.id, s]));
+  const supplierMap = new Map(
+    (suppliers || []).map((s) => [
+      s.id,
+      {
+        id: s.id as string,
+        name: s.name as string,
+        cep: s.cep as string,
+        allowed_service_ids: normalizeAllowedServiceIds(s.allowed_service_ids),
+      },
+    ])
+  );
   const groups = new Map<
     string,
     {
-      supplier: { id: string; name: string; cep: string };
+      supplier: {
+        id: string;
+        name: string;
+        cep: string;
+        allowed_service_ids: number[];
+      };
       items: Required<Pick<ShipItemInput, 'id' | 'quantity' | 'price' | 'weight' | 'width' | 'height' | 'length'>>[];
     }
   >();
@@ -202,7 +218,6 @@ export async function quoteShipping(
   }
 
   const baseUrl = meBaseUrl();
-  const allowedServices = [1, 2];
   const merged = new Map<number, ShippingQuoteOption>();
 
   async function calculateWithAuthRetry(
@@ -227,6 +242,14 @@ export async function quoteShipping(
   }
 
   for (const [, group] of groups) {
+    const allowedServices = group.supplier.allowed_service_ids;
+    if (allowedServices.length === 0) {
+      routeErrors.push(
+        `${group.supplier.name}: nenhuma transportadora habilitada no cadastro.`
+      );
+      continue;
+    }
+
     const meData = await calculateWithAuthRetry(group.supplier.cep, group.items);
 
     let groupHadOption = false;
@@ -250,7 +273,7 @@ export async function quoteShipping(
           name: opt.name,
           price,
           delivery_time: delivery,
-          company: opt.company?.name || 'Correios',
+          company: opt.company?.name || 'Transportadora',
           breakdown: [
             {
               supplier_id: group.supplier.id,
@@ -272,6 +295,9 @@ export async function quoteShipping(
 
     if (!groupHadOption) {
       console.warn('Nenhuma opção ME para fornecedor', group.supplier.name, routeErrors);
+      routeErrors.push(
+        `${group.supplier.name}: sem cotação nas transportadoras habilitadas (${allowedServices.join(', ')}).`
+      );
     }
   }
 
@@ -281,9 +307,15 @@ export async function quoteShipping(
     .map((o) => ({ ...o, price: Number(o.price.toFixed(2)) }));
 
   if (options.length === 0) {
+    const conflictHint =
+      supplierCount > 1
+        ? ' Carrinho com fornecedores de transportadoras diferentes: só entram opções em comum (ex.: todos Correios ou todos Jadlog).'
+        : '';
     return {
       ok: false,
-      error: routeErrors[0] || 'Nenhuma opção de frete disponível para este CEP (PAC/SEDEX).',
+      error:
+        routeErrors[0] ||
+        `Nenhuma opção de frete disponível para este CEP.${conflictHint}`,
       details: routeErrors,
     };
   }

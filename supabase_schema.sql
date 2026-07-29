@@ -107,8 +107,13 @@ create table if not exists suppliers (
   city text not null,
   state text not null,
   notes text,
+  -- IDs Melhor Envio: 1=PAC, 2=SEDEX, 3=Jadlog.Package, 4=Jadlog.Com
+  allowed_service_ids integer[] not null default array[1, 2],
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
+alter table suppliers
+  add column if not exists allowed_service_ids integer[] not null default array[1, 2];
 
 alter table suppliers enable row level security;
 

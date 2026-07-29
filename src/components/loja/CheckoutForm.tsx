@@ -122,16 +122,16 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[var(--color-loja-bg)] relative">
-      <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10 shadow-sm">
-        <button onClick={onBack} className="text-sm font-bold text-gray-500 hover:text-black">
-          ← Voltar ao Carrinho
+    <div className="flex flex-col h-full min-h-0 bg-[var(--color-loja-bg)] overflow-hidden">
+      <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-3 bg-white shrink-0 shadow-sm min-w-0">
+        <button type="button" onClick={onBack} className="text-sm font-bold text-gray-500 hover:text-black shrink-0">
+          ← Voltar
         </button>
-        <h2 className="font-extrabold text-lg">Dados de Entrega</h2>
+        <h2 className="font-extrabold text-lg truncate">Dados de Entrega</h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-        <form id="checkout-form" onSubmit={handleCheckout} className="flex flex-col gap-4">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 overscroll-contain">
+        <form id="checkout-form" onSubmit={handleCheckout} className="flex flex-col gap-4 min-w-0">
           
           {/* PERSONAL INFO - ALWAYS VISIBLE AT THE TOP */}
           <div className="flex flex-col gap-4 mb-2">
@@ -142,13 +142,13 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
               <input 
                 type="text" required 
                 value={form.name} onChange={e => setForm({...form, name: e.target.value})}
-                className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors w-full min-w-0"
                 placeholder="Seu nome"
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex flex-col gap-1 flex-1">
+            <div className="flex flex-col sm:flex-row gap-4 min-w-0">
+              <div className="flex flex-col gap-1 flex-1 min-w-0">
                 <label className="text-sm font-bold text-gray-700">Celular (WhatsApp) *</label>
                 <input 
                   type="text" required maxLength={15}
@@ -160,16 +160,16 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                     if (val.length > 10) val = `${val.slice(0,10)}-${val.slice(10)}`;
                     setForm({...form, phone: val});
                   }}
-                  className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                  className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors w-full min-w-0"
                   placeholder="(00) 00000-0000"
                 />
               </div>
-              <div className="flex flex-col gap-1 flex-1">
+              <div className="flex flex-col gap-1 flex-1 min-w-0">
                 <label className="text-sm font-bold text-gray-700">E-mail (Opcional)</label>
                 <input 
                   type="email" 
                   value={form.email} onChange={e => setForm({...form, email: e.target.value})}
-                  className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                  className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors w-full min-w-0"
                   placeholder="seu@email.com"
                 />
               </div>
@@ -189,7 +189,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                 if (val.length > 5) val = `${val.slice(0,5)}-${val.slice(5,8)}`;
                 setForm({...form, cep: val});
               }}
-              className="border-2 border-gray-300 rounded-xl p-4 outline-none focus:border-black transition-colors font-medium text-lg"
+              className="border-2 border-gray-300 rounded-xl p-4 outline-none focus:border-black transition-colors font-medium text-lg w-full min-w-0"
               placeholder="00000-000"
             />
           </div>
@@ -200,63 +200,63 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
               
               <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">2. Complete seu endereço</h3>
               
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex flex-col gap-1 sm:flex-[2]">
+              <div className="flex flex-col sm:flex-row gap-4 min-w-0">
+                <div className="flex flex-col gap-1 sm:flex-[2] min-w-0">
                   <label className="text-sm font-bold text-gray-700">Rua / Logradouro *</label>
                   <input 
                     type="text" required 
                     value={form.street} onChange={e => setForm({...form, street: e.target.value})}
-                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors w-full min-w-0"
                     placeholder="Sua rua"
                   />
                 </div>
-                <div className="flex flex-col gap-1 sm:flex-1">
+                <div className="flex flex-col gap-1 sm:flex-1 min-w-0">
                   <label className="text-sm font-bold text-gray-700">Número *</label>
                   <input 
                     type="text" required 
                     value={form.number} onChange={e => setForm({...form, number: e.target.value})}
-                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors w-full min-w-0"
                     placeholder="1000"
                   />
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex flex-col gap-1 flex-1">
+              <div className="flex flex-col sm:flex-row gap-4 min-w-0">
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
                   <label className="text-sm font-bold text-gray-700">Complemento</label>
                   <input 
                     type="text" 
                     value={form.complement} onChange={e => setForm({...form, complement: e.target.value})}
-                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors w-full min-w-0"
                     placeholder="Apto, Bloco..."
                   />
                 </div>
-                <div className="flex flex-col gap-1 flex-1">
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
                   <label className="text-sm font-bold text-gray-700">Bairro *</label>
                   <input 
                     type="text" required 
                     value={form.neighborhood} onChange={e => setForm({...form, neighborhood: e.target.value})}
-                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors w-full min-w-0"
                     placeholder="Seu bairro"
                   />
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex flex-col gap-1 sm:flex-[2]">
+              <div className="flex flex-col sm:flex-row gap-4 min-w-0">
+                <div className="flex flex-col gap-1 sm:flex-[2] min-w-0">
                   <label className="text-sm font-bold text-gray-700">Cidade *</label>
                   <input 
                     type="text" required 
                     value={form.city} onChange={e => setForm({...form, city: e.target.value})}
-                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors w-full min-w-0"
                   />
                 </div>
-                <div className="flex flex-col gap-1 sm:flex-1">
+                <div className="flex flex-col gap-1 sm:flex-1 min-w-0">
                   <label className="text-sm font-bold text-gray-700">Estado *</label>
                   <input 
                     type="text" required 
                     value={form.state} onChange={e => setForm({...form, state: e.target.value})}
-                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors"
+                    className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors w-full min-w-0"
                   />
                 </div>
               </div>
@@ -279,8 +279,10 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${shippingOption?.id === opt.id ? 'border-[var(--color-loja-cta)]' : 'border-gray-300'}`}>
                         {shippingOption?.id === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-loja-cta)]" />}
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-[var(--color-loja-text)]">{opt.name}</span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-[var(--color-loja-text)]">
+                          {opt.company ? `${opt.company} — ${opt.name}` : opt.name}
+                        </span>
                         <span className="text-sm text-gray-500">Chega em até {opt.delivery_time} dias úteis</span>
                         {opt.breakdown && opt.breakdown.length > 1 && (
                           <span className="text-xs text-gray-400 mt-1">
@@ -308,12 +310,12 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
           )}
 
           {/* ESPAÇO NO FINAL */}
-          <div className="mb-24"></div>
+          <div className="h-4"></div>
 
         </form>
       </div>
 
-      <div className="absolute bottom-0 w-full p-4 bg-white border-t border-gray-100 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+      <div className="shrink-0 w-full p-4 bg-white border-t border-gray-100 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
         <button 
           type="submit"
           form="checkout-form"
