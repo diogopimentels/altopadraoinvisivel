@@ -42,11 +42,16 @@ export function FeaturedProductClient({ data }: { data: any }) {
           </div>
         )}
         
-        <div className="flex flex-col justify-center flex-1 pr-2">
+        <div className="flex flex-col justify-center flex-1 pr-2 min-w-0">
           <h3 className="font-bold text-base leading-tight text-[var(--color-bio-text)] line-clamp-2">{data.name}</h3>
           {data.price && (
             <span className="font-medium text-sm mt-1 text-[var(--color-bio-accent)]">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.price)}
+            </span>
+          )}
+          {data.free_shipping && (
+            <span className="mt-1.5 inline-flex w-fit bg-emerald-600 text-white text-[10px] uppercase font-extrabold tracking-wide px-2 py-0.5 rounded">
+              Frete grátis
             </span>
           )}
         </div>

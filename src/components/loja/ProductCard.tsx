@@ -53,7 +53,7 @@ export function ProductCard({
       <div className="aspect-square w-full bg-[var(--color-loja-surface)] rounded-md overflow-hidden relative border border-gray-100">
         <Link href={`/produto/${id}`} className="absolute inset-0 z-10" />
         {free_shipping && (
-          <span className="absolute top-2 left-2 z-20 bg-emerald-600 text-white text-[10px] uppercase font-bold px-2 py-1 rounded">
+          <span className="absolute top-3 left-3 z-20 bg-emerald-600 text-white text-xs uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
             Frete grátis
           </span>
         )}
@@ -87,16 +87,19 @@ export function ProductCard({
         )}
       </div>
 
-      <div className="flex justify-between items-start">
-        <div className="flex flex-col">
+      <div className="flex justify-between items-start gap-3">
+        <div className="flex flex-col min-w-0">
           <h3 className="font-semibold text-base leading-tight text-[var(--color-loja-text)]">{name}</h3>
           <p className="text-sm font-medium text-[var(--color-loja-muted)] mt-1">
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price)}
           </p>
+          {free_shipping && (
+            <p className="text-sm font-bold text-emerald-700 mt-1">Frete grátis neste produto</p>
+          )}
         </div>
         <button 
           onClick={handleBuy}
-          className="bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] px-4 py-2 rounded-full text-sm font-bold shadow-sm active:scale-95 transition-transform relative z-20"
+          className="bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] px-4 py-2 rounded-full text-sm font-bold shadow-sm active:scale-95 transition-transform relative z-20 shrink-0"
         >
           Comprar
         </button>

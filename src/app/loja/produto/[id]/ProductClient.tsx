@@ -26,6 +26,11 @@ export function ProductClient({ product }: { product: any }) {
       {/* Image Gallery */}
       <div className="flex flex-col gap-3">
         <div className="aspect-square w-full rounded-xl overflow-hidden bg-gray-100 border border-gray-200 relative">
+          {product.free_shipping && (
+            <span className="absolute top-3 left-3 z-10 bg-emerald-600 text-white text-sm uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
+              Frete grátis
+            </span>
+          )}
           {product.images && product.images.length > 0 ? (
             <img 
               src={product.images[currentImage]} 
@@ -66,14 +71,15 @@ export function ProductClient({ product }: { product: any }) {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--color-loja-text)] leading-tight">
             {product.name}
           </h1>
-          {product.free_shipping && (
-            <span className="inline-block mt-2 bg-emerald-600 text-white text-[10px] uppercase font-bold px-2.5 py-1 rounded">
-              Frete grátis
-            </span>
-          )}
           <p className="text-xl sm:text-2xl font-medium text-[var(--color-loja-text)] mt-3">
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
           </p>
+          {product.free_shipping && (
+            <div className="mt-3 flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-4 py-3">
+              <span className="text-sm font-extrabold uppercase tracking-wide">Frete grátis</span>
+              <span className="text-sm font-medium">— você não paga o envio deste produto</span>
+            </div>
+          )}
         </div>
 
         {/* Action Button */}
@@ -81,7 +87,7 @@ export function ProductClient({ product }: { product: any }) {
           onClick={handleBuy}
           className="w-full py-4 mt-2 bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] rounded-xl font-extrabold text-lg shadow-md hover:scale-[1.01] active:scale-[0.98] transition-transform"
         >
-          Adicionar ao Carrinho
+          {product.free_shipping ? "Adicionar — Frete Grátis" : "Adicionar ao Carrinho"}
         </button>
 
         {/* Description */}
