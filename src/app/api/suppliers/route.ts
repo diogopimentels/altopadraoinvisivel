@@ -88,7 +88,7 @@ export async function POST(request: Request) {
 
     if (Array.isArray(rawBody.allowed_service_ids) && rawBody.allowed_service_ids.length === 0) {
       return NextResponse.json(
-        { error: 'Selecione ao menos uma transportadora (Correios ou Jadlog).' },
+        { error: 'Selecione ao menos uma transportadora.' },
         { status: 400 }
       );
     }

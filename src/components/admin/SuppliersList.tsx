@@ -8,8 +8,8 @@ import {
   ME_CARRIER_GROUPS,
   labelForServiceIds,
   normalizeAllowedServiceIds,
-  serviceIdsFromCarrierKeys,
   carrierKeysFromServiceIds,
+  toggleCarrierServiceIds,
 } from "@/lib/melhorEnvioServices";
 
 const emptyForm: Omit<SupplierData, "id"> & { id?: string } = {
@@ -94,14 +94,17 @@ export function SuppliersList() {
   };
 
   const selectedCarriers = carrierKeysFromServiceIds(
-    normalizeAllowedServiceIds(form.allowed_service_ids)
+    normalizeAllowedServiceIds(form.allowed_service_ids, { fallback: false })
   );
 
   const toggleCarrier = (key: string) => {
-    const next = selectedCarriers.includes(key)
-      ? selectedCarriers.filter((k) => k !== key)
-      : [...selectedCarriers, key];
-    setForm({ ...form, allowed_service_ids: serviceIdsFromCarrierKeys(next) });
+    setForm({
+      ...form,
+      allowed_service_ids: toggleCarrierServiceIds(
+        normalizeAllowedServiceIds(form.allowed_service_ids, { fallback: false }),
+        key
+      ),
+    });
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -265,9 +268,9 @@ export function SuppliersList() {
         <div className="flex flex-col gap-2">
           <label className="text-sm font-bold">Transportadoras *</label>
           <p className="text-xs text-gray-500">
-            Só essas opções aparecem no checkout para produtos deste fornecedor.
+            Só essas opções aparecem no checkout para produtos deste fornecedor (Melhor Envio).
           </p>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1">
             {ME_CARRIER_GROUPS.map((group) => {
               const checked = selectedCarriers.includes(group.key);
               return (
@@ -285,7 +288,7 @@ export function SuppliersList() {
                     checked={checked}
                     onChange={() => toggleCarrier(group.key)}
                   />
-                  <span className="flex flex-col">
+                  <span className="flex flex-col min-w-0">
                     <span className="font-bold text-sm">{group.label}</span>
                     <span className="text-xs text-gray-500">{group.description}</span>
                   </span>

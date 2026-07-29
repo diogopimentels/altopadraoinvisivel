@@ -107,7 +107,8 @@ create table if not exists suppliers (
   city text not null,
   state text not null,
   notes text,
-  -- IDs Melhor Envio: 1=PAC, 2=SEDEX, 3=Jadlog.Package, 4=Jadlog.Com
+  -- IDs Melhor Envio (ex.: 1=PAC, 2=SEDEX, 3=Jadlog.Package, 12=LATAM, 15=Azul…).
+  -- Catálogo completo: src/lib/melhorEnvioServices.ts
   allowed_service_ids integer[] not null default array[1, 2],
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
