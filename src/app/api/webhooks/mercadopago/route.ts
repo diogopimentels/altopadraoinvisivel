@@ -67,6 +67,16 @@ async function fetchPayment(paymentId: string) {
 }
 
 async function markOrderPaid(orderId: string, paymentId: string | number) {
+  const { data: order, error: fetchError } = await supabaseAdmin
+    .from('orders')
+    .select('id, items, payment_status')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (fetchError) throw fetchError;
+  if (!order) throw new Error(`Pedido ${orderId} não encontrado`);
+  if (order.payment_status === 'paid') return { already_paid: true };
+
   const { error } = await supabaseAdmin
     .from('orders')
     .update({
@@ -86,6 +96,34 @@ async function markOrderPaid(orderId: string, paymentId: string | number) {
 
     if (fallbackError) throw fallbackError;
   }
+
+  // Baixa estoque após pagamento confirmado
+  const orderItems = Array.isArray(order.items) ? order.items : [];
+  for (const item of orderItems) {
+    const productId = String(item?.id || '');
+    const qty = Math.max(0, Math.floor(Number(item?.quantity) || 0));
+    if (!productId || qty <= 0) continue;
+
+    const { data: product } = await supabaseAdmin
+      .from('products')
+      .select('id, stock')
+      .eq('id', productId)
+      .maybeSingle();
+
+    if (!product) continue;
+
+    const nextStock = Math.max(0, Math.floor(Number(product.stock) || 0) - qty);
+    const { error: stockError } = await supabaseAdmin
+      .from('products')
+      .update({ stock: nextStock })
+      .eq('id', productId);
+
+    if (stockError) {
+      console.error('Falha ao baixar estoque', productId, stockError.message);
+    }
+  }
+
+  return { already_paid: false };
 }
 
 export async function POST(request: Request) {
@@ -151,7 +189,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'amount mismatch' }, { status: 409 });
       }
 
-      await markOrderPaid(String(orderId), payment.id);
+      const result = await markOrderPaid(String(orderId), payment.id);
+      if (result.already_paid) {
+        return NextResponse.json({ success: true, already_paid: true }, { status: 200 });
+      }
     }
 
     return NextResponse.json({ success: true }, { status: 200 });

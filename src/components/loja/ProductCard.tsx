@@ -15,6 +15,7 @@ interface ProductCardProps {
   length?: number;
   supplier_id?: string | null;
   free_shipping?: boolean;
+  stock?: number;
 }
 
 export function ProductCard({
@@ -28,11 +29,14 @@ export function ProductCard({
   length,
   supplier_id,
   free_shipping,
+  stock,
 }: ProductCardProps) {
   const { addItem } = useCartStore();
   const [currentImage, setCurrentImage] = useState(0);
+  const outOfStock = Number(stock ?? 0) <= 0;
 
   const handleBuy = () => {
+    if (outOfStock) return;
     addItem({
       id,
       name,
@@ -52,17 +56,21 @@ export function ProductCard({
       
       <div className="aspect-square w-full bg-[var(--color-loja-surface)] rounded-md overflow-hidden relative border border-gray-100">
         <Link href={`/produto/${id}`} className="absolute inset-0 z-10" />
-        {free_shipping && (
+        {outOfStock ? (
+          <span className="absolute top-3 left-3 z-20 bg-red-600 text-white text-xs uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
+            Esgotado
+          </span>
+        ) : free_shipping ? (
           <span className="absolute top-3 left-3 z-20 bg-emerald-600 text-white text-xs uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
             Frete grátis
           </span>
-        )}
+        ) : null}
         {images && images.length > 0 ? (
           <>
             <img 
               src={images[currentImage]} 
               alt={`${name} - Imagem ${currentImage + 1}`}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+              className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${outOfStock ? 'opacity-60' : ''}`} 
             />
             {images.length > 1 && (
               <div className="absolute bottom-3 left-0 w-full flex justify-center gap-1.5 z-20 pointer-events-auto">
@@ -93,15 +101,18 @@ export function ProductCard({
           <p className="text-sm font-medium text-[var(--color-loja-muted)] mt-1">
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price)}
           </p>
-          {free_shipping && (
+          {outOfStock ? (
+            <p className="text-sm font-bold text-red-600 mt-1">Produto esgotado</p>
+          ) : free_shipping ? (
             <p className="text-sm font-bold text-emerald-700 mt-1">Frete grátis neste produto</p>
-          )}
+          ) : null}
         </div>
         <button 
           onClick={handleBuy}
-          className="bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] px-4 py-2 rounded-full text-sm font-bold shadow-sm active:scale-95 transition-transform relative z-20 shrink-0"
+          disabled={outOfStock}
+          className="bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] px-4 py-2 rounded-full text-sm font-bold shadow-sm active:scale-95 transition-transform relative z-20 shrink-0 disabled:opacity-40 disabled:active:scale-100"
         >
-          Comprar
+          {outOfStock ? "Esgotado" : "Comprar"}
         </button>
       </div>
     </div>

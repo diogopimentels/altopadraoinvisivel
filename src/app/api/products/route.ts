@@ -21,6 +21,7 @@ const productSchema = z.object({
   is_published: z.boolean().default(false),
   supplier_id: z.string().min(1, "Selecione um fornecedor"),
   free_shipping: z.boolean().default(false),
+  stock: z.number().int().nonnegative("Estoque não pode ser negativo").default(0),
 });
 
 export interface ProductData {
@@ -38,6 +39,7 @@ export interface ProductData {
   is_published: boolean;
   supplier_id?: string | null;
   free_shipping?: boolean;
+  stock?: number;
 }
 
 export async function GET() {
@@ -112,6 +114,7 @@ export async function POST(request: Request) {
         is_published: body.is_published,
         supplier_id: body.supplier_id,
         free_shipping: body.free_shipping ?? false,
+        stock: Math.max(0, Math.floor(Number(body.stock) || 0)),
       })
       .select()
       .single();

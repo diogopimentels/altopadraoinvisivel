@@ -19,11 +19,15 @@ create table if not exists products (
   length numeric default 20,
   is_published boolean default false,
   free_shipping boolean not null default false,
+  stock integer not null default 0,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 alter table products
   add column if not exists free_shipping boolean not null default false;
+
+alter table products
+  add column if not exists stock integer not null default 0;
 
 -- Cria a tabela de pedidos
 create table if not exists orders (

@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const productIds = [...new Set((items as any[]).map((i) => String(i.id)))];
     const { data: productsDb, error: productsError } = await admin
       .from('products')
-      .select('id, name, price, weight, width, height, length, supplier_id, is_published, images')
+      .select('id, name, price, weight, width, height, length, supplier_id, is_published, images, stock')
       .in('id', productIds);
 
     if (productsError) throw productsError;
@@ -60,6 +60,19 @@ export async function POST(request: Request) {
       }
 
       const quantity = Math.max(1, Math.min(99, Math.floor(Number(raw.quantity) || 1)));
+      const available = Math.max(0, Math.floor(Number((product as any).stock) || 0));
+      if (quantity > available) {
+        return NextResponse.json(
+          {
+            error:
+              available <= 0
+                ? `"${product.name}" está esgotado.`
+                : `"${product.name}" tem apenas ${available} em estoque.`,
+          },
+          { status: 400 }
+        );
+      }
+
       trustedItems.push({
         id: product.id,
         name: product.name,

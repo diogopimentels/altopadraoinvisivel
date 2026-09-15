@@ -58,6 +58,7 @@ export function ProductList({ products }: ProductListProps) {
             length={product.length}
             supplier_id={product.supplier_id}
             free_shipping={product.free_shipping}
+            stock={product.stock}
           />
         ))}
         {filteredProducts.length === 0 && (

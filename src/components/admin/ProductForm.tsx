@@ -32,6 +32,7 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
     is_published: initialData?.is_published ?? false,
     supplier_id: initialData?.supplier_id || "",
     free_shipping: initialData?.free_shipping ?? false,
+    stock: initialData?.stock ?? 0,
   });
 
   useEffect(() => {
@@ -222,6 +223,28 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
                 className="border border-gray-300 rounded-md px-2 py-1.5 text-sm"
               />
             </div>
+          </div>
+
+          <div className="mt-3 flex flex-col gap-1 max-w-xs">
+            <label className="text-xs font-semibold">Estoque (unidades) *</label>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              required
+              value={form.stock ?? 0}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  stock: Math.max(0, Math.floor(Number(e.target.value) || 0)),
+                })
+              }
+              className="border border-gray-300 rounded-md px-2 py-1.5 text-sm"
+              placeholder="0"
+            />
+            <p className="text-[11px] text-gray-500">
+              Quantidade disponível. Com 0 o produto aparece como esgotado.
+            </p>
           </div>
 
           <button

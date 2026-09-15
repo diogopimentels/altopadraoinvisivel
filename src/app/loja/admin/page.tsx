@@ -292,6 +292,9 @@ export default function AdminPage() {
                     </h3>
                     <span className="font-extrabold text-[var(--color-loja-text)] mt-1">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                      <span className={`ml-2 text-xs font-bold ${Number(product.stock) > 0 ? 'text-gray-500' : 'text-red-600'}`}>
+                        · Estoque: {product.stock ?? 0}
+                      </span>
                     </span>
                   </div>
                 </div>
