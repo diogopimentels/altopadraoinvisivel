@@ -27,3 +27,25 @@
     @apply antialiased;
   }
 }
+
+@media print {
+  body:has([data-sales-report]) * {
+    visibility: hidden;
+  }
+
+  body:has([data-sales-report]) [data-sales-report],
+  body:has([data-sales-report]) [data-sales-report] * {
+    visibility: visible;
+  }
+
+  body:has([data-sales-report]) [data-sales-report] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  body:has([data-sales-report]) [data-print-hide] {
+    display: none !important;
+  }
+}

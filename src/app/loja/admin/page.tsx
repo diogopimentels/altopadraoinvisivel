@@ -4,16 +4,17 @@ import { useEffect, useState } from "react";
 import { ProductData } from "@/app/api/products/route";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { OrdersList } from "@/components/admin/OrdersList";
-import { Plus, Star, PencilSimple, Trash, Storefront, ShoppingBag, Truck } from "@phosphor-icons/react";
+import { Plus, Star, PencilSimple, Trash, Storefront, ShoppingBag, Truck, ChartBar } from "@phosphor-icons/react";
 import { logoutAction } from "./actions";
 import { SuppliersList } from "@/components/admin/SuppliersList";
+import { SalesMetrics } from "@/components/admin/SalesMetrics";
 
 export default function AdminPage() {
   const [products, setProducts] = useState<ProductData[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<ProductData | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'suppliers'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'suppliers' | 'metrics'>('products');
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
@@ -116,7 +117,7 @@ export default function AdminPage() {
   return (
     <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto pb-10">
       
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+      <div data-print-hide className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
         <div>
           <h1 className="text-2xl font-extrabold text-[var(--color-loja-text)]">Gerenciador de Loja</h1>
           <p className="text-[var(--color-loja-muted)] text-sm mt-1">
@@ -141,7 +142,7 @@ export default function AdminPage() {
       </div>
 
       {/* TABS */}
-      <div className="flex gap-2 border-b border-gray-200 pb-1 mb-2 overflow-x-auto">
+      <div data-print-hide className="flex gap-2 border-b border-gray-200 pb-1 mb-2 overflow-x-auto">
         <button 
           onClick={() => setActiveTab('products')}
           className={`flex items-center gap-2 px-4 py-2 font-bold text-sm transition-all border-b-2 shrink-0 ${
@@ -166,9 +167,19 @@ export default function AdminPage() {
         >
           <ShoppingBag size={18} weight={activeTab === 'orders' ? 'fill' : 'regular'} /> Pedidos
         </button>
+        <button
+          onClick={() => setActiveTab('metrics')}
+          className={`flex items-center gap-2 px-4 py-2 font-bold text-sm transition-all border-b-2 shrink-0 ${
+            activeTab === 'metrics' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          <ChartBar size={18} weight={activeTab === 'metrics' ? 'fill' : 'regular'} /> Métricas
+        </button>
       </div>
 
-      {activeTab === 'orders' ? (
+      {activeTab === 'metrics' ? (
+        <SalesMetrics />
+      ) : activeTab === 'orders' ? (
         <OrdersList />
       ) : activeTab === 'suppliers' ? (
         <SuppliersList />
