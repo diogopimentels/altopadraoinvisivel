@@ -10,6 +10,46 @@ function meOAuthBase() {
     : 'https://www.melhorenvio.com.br';
 }
 
+/** Callback cadastrado no app da Área Dev. Tem que ser idêntico. */
+export const MELHOR_ENVIO_REDIRECT_URI = 'https://loja.altopadraoinvisivel.com.br';
+
+const MELHOR_ENVIO_SCOPES = [
+  'cart-read',
+  'cart-write',
+  'companies-read',
+  'coupons-read',
+  'shipping-calculate',
+  'shipping-cancel',
+  'shipping-checkout',
+  'shipping-companies',
+  'shipping-generate',
+  'shipping-preview',
+  'shipping-print',
+  'shipping-share',
+  'shipping-tracking',
+  'ecommerce-shipping',
+  'transactions-read',
+  'users-read',
+].join(' ');
+
+export function buildMelhorEnvioAuthorizeUrl(state: string) {
+  const clientId = process.env.MELHOR_ENVIO_CLIENT_ID;
+  if (!clientId) {
+    throw new Error('MELHOR_ENVIO_CLIENT_ID ausente');
+  }
+  const authorizeBase = process.env.MELHOR_ENVIO_ENVIRONMENT === 'sandbox'
+    ? 'https://sandbox.melhorenvio.com.br'
+    : 'https://melhorenvio.com.br';
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: MELHOR_ENVIO_REDIRECT_URI,
+    response_type: 'code',
+    state,
+    scope: MELHOR_ENVIO_SCOPES,
+  });
+  return `${authorizeBase}/oauth/authorize?${params.toString()}`;
+}
+
 function userAgent() {
   return 'AltoPadraoInvisivel (pimentel.bm01@gmail.com)';
 }
@@ -160,6 +200,67 @@ export async function getMelhorEnvioAccessToken(options?: {
     }
     throw err;
   }
+}
+
+export async function getMelhorEnvioTokenStatus(): Promise<{
+  connected: boolean;
+  expiresAt: string | null;
+  expired: boolean;
+}> {
+  const row = await readStored();
+  if (!row?.expires_at) {
+    return { connected: false, expiresAt: null, expired: true };
+  }
+  const expiresAt = new Date(row.expires_at).getTime();
+  return {
+    connected: Boolean(row.access_token && row.refresh_token),
+    expiresAt: row.expires_at,
+    expired: !Number.isFinite(expiresAt) || expiresAt <= Date.now(),
+  };
+}
+
+/** Troca o code do OAuth por access + refresh e grava no Supabase. */
+export async function exchangeAuthorizationCode(code: string): Promise<{ expires_at: string }> {
+  const clientId = process.env.MELHOR_ENVIO_CLIENT_ID;
+  const clientSecret = process.env.MELHOR_ENVIO_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error('MELHOR_ENVIO_CLIENT_ID/SECRET não configurados');
+  }
+
+  const res = await fetch(`${meOAuthBase()}/oauth/token`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'User-Agent': userAgent(),
+    },
+    body: JSON.stringify({
+      grant_type: 'authorization_code',
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: MELHOR_ENVIO_REDIRECT_URI,
+      code,
+    }),
+    cache: 'no-store',
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.access_token || !data.refresh_token) {
+    throw new Error(
+      `Autorização Melhor Envio falhou (${res.status}): ${data.message || data.error || 'sem token'}`
+    );
+  }
+
+  const expiresIn = Number(data.expires_in) || 2592000;
+  const row: TokenRow = {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+    expires_at: new Date(Date.now() + expiresIn * 1000).toISOString(),
+  };
+  await writeStored(row);
+  process.env.MELHOR_ENVIO_ACCESS_TOKEN = row.access_token;
+  process.env.MELHOR_ENVIO_REFRESH_TOKEN = row.refresh_token;
+  return { expires_at: row.expires_at };
 }
 
 /** Endpoint/cron: força refresh e persiste. */

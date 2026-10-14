@@ -8,6 +8,7 @@ import { Plus, Star, PencilSimple, Trash, Storefront, ShoppingBag, Truck, ChartB
 import { logoutAction } from "./actions";
 import { SuppliersList } from "@/components/admin/SuppliersList";
 import { SalesMetrics } from "@/components/admin/SalesMetrics";
+import { MelhorEnvioToken } from "@/components/admin/MelhorEnvioToken";
 
 export default function AdminPage() {
   const [products, setProducts] = useState<ProductData[]>([]);
@@ -140,6 +141,8 @@ export default function AdminPage() {
           </form>
         </div>
       </div>
+
+      <MelhorEnvioToken />
 
       {/* TABS */}
       <div data-print-hide className="flex gap-2 border-b border-gray-200 pb-1 mb-2 overflow-x-auto">

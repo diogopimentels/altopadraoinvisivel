@@ -57,6 +57,13 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  // OAuth do Melhor Envio volta na raiz da loja (?code=), que é o redirect cadastrado.
+  if (isLoja && url.pathname === '/' && url.searchParams.has('code')) {
+    const dest = request.nextUrl.clone();
+    dest.pathname = '/api/melhor-envio/callback';
+    return NextResponse.rewrite(dest);
+  }
+
   // Skip rewriting for API routes
   if (url.pathname.startsWith('/api')) {
     return NextResponse.next();
