@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 const FROM =
-  process.env.RESEND_FROM || 'Alto Padrão Invisível <pedidos@altopadraoinvisivel.com.br>';
+  process.env.RESEND_FROM || 'Alto Padrão Invisível <contato@pedidos.altopadraoinvisivel.com.br>';
 
 const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
