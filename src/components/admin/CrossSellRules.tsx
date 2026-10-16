@@ -1,0 +1,149 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Trash } from "@phosphor-icons/react";
+
+type ProductOption = { id: string; name: string };
+type Rule = {
+  id: string;
+  triggerProductId: string;
+  targetProductId: string;
+  discountPercent: number;
+  triggerName: string;
+  targetName: string;
+};
+
+export function CrossSellRules() {
+  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [triggerProductId, setTriggerProductId] = useState("");
+  const [targetProductId, setTargetProductId] = useState("");
+  const [discountPercent, setDiscountPercent] = useState(10);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    const [productRes, ruleRes] = await Promise.all([
+      fetch("/api/products"),
+      fetch("/api/cross-sell?all=1"),
+    ]);
+    const productData = await productRes.json();
+    const ruleData = await ruleRes.json();
+    if (Array.isArray(productData)) {
+      setProducts(productData.map((product: ProductOption) => ({ id: product.id, name: product.name })));
+    }
+    setRules(Array.isArray(ruleData.rules) ? ruleData.rules : []);
+  };
+
+  useEffect(() => {
+    load().catch(() => setError("Não foi possível carregar as ofertas."));
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch("/api/cross-sell", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ triggerProductId, targetProductId, discountPercent: Number(discountPercent) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao salvar");
+      setTriggerProductId("");
+      setTargetProductId("");
+      setDiscountPercent(10);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async (id: string) => {
+    await fetch(`/api/cross-sell?id=${id}`, { method: "DELETE" });
+    await load();
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-lg font-extrabold">Oferta cruzada</h2>
+        <p className="text-xs text-gray-500 mt-1">
+          Quem leva um produto ganha desconto em outro, no mesmo carrinho. O valor com desconto é o que vai para o Mercado Pago.
+        </p>
+      </div>
+
+      <div className="border border-gray-200 rounded-xl bg-white p-4 flex flex-col gap-3">
+        <label className="text-xs font-bold text-gray-600">
+          Se o carrinho tiver
+          <select
+            value={triggerProductId}
+            onChange={(event) => setTriggerProductId(event.target.value)}
+            className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-semibold"
+          >
+            <option value="">Escolha o produto</option>
+            {products.map((product) => (
+              <option key={product.id} value={product.id}>{product.name}</option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs font-bold text-gray-600">
+          este sai com desconto
+          <select
+            value={targetProductId}
+            onChange={(event) => setTargetProductId(event.target.value)}
+            className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-semibold"
+          >
+            <option value="">Escolha o produto</option>
+            {products.map((product) => (
+              <option key={product.id} value={product.id}>{product.name}</option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs font-bold text-gray-600">
+          Porcentagem
+          <input
+            type="number"
+            min={1}
+            max={99}
+            value={discountPercent}
+            onChange={(event) => setDiscountPercent(Number(event.target.value))}
+            className="mt-1 w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm font-semibold"
+          />
+        </label>
+        <button
+          type="button"
+          disabled={saving || !triggerProductId || !targetProductId}
+          onClick={save}
+          className="bg-black text-white text-sm font-bold px-4 py-2.5 rounded-lg disabled:opacity-50"
+        >
+          {saving ? "Salvando..." : "Salvar oferta"}
+        </button>
+        {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
+      </div>
+
+      {rules.length === 0 ? (
+        <p className="text-sm text-gray-500 font-semibold">Nenhuma oferta cadastrada.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {rules.map((rule) => (
+            <div key={rule.id} className="border border-gray-200 rounded-xl bg-white px-3 py-3 flex items-start justify-between gap-3">
+              <p className="text-sm">
+                <span className="font-bold">{rule.triggerName}</span>
+                <span className="text-gray-500"> libera </span>
+                <span className="font-bold">{rule.discountPercent}%</span>
+                <span className="text-gray-500"> em </span>
+                <span className="font-bold">{rule.targetName}</span>
+              </p>
+              <button type="button" onClick={() => remove(rule.id)} className="text-red-600 shrink-0" aria-label="Apagar oferta">
+                <Trash size={18} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

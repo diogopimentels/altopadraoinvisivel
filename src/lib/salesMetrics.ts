@@ -3,6 +3,7 @@ export type SaleItem = {
   name: string;
   price: number;
   quantity: number;
+  imageUrl?: string;
 };
 
 export type SaleOrder = {
@@ -18,6 +19,7 @@ export type SaleOrder = {
 export type ProductMetric = {
   id: string;
   name: string;
+  imageUrl?: string;
   quantity: number;
   orderCount: number;
   revenue: number;
@@ -32,6 +34,7 @@ export type SalesLine = {
   paymentStatus: string;
   productId: string;
   productName: string;
+  imageUrl?: string;
   quantity: number;
   unitPrice: number;
   lineTotal: number;
@@ -103,6 +106,7 @@ export function normalizeOrder(raw: Record<string, unknown>): SaleOrder {
         name: String(row.name || "Produto"),
         price: num(row.price),
         quantity: Math.max(0, Math.floor(num(row.quantity))),
+        imageUrl: String(row.imageUrl || (Array.isArray(row.images) ? row.images[0] : "") || ""),
       };
     }),
   };
@@ -172,6 +176,7 @@ export function buildSalesReport(
         paymentStatus: order.payment_status,
         productId: item.id,
         productName: item.name,
+        imageUrl: item.imageUrl,
         quantity: item.quantity,
         unitPrice: item.price,
         lineTotal,
@@ -180,6 +185,7 @@ export function buildSalesReport(
       const current = byProduct.get(item.id) || {
         id: item.id,
         name: item.name,
+        imageUrl: item.imageUrl,
         quantity: 0,
         orderCount: 0,
         revenue: 0,
@@ -188,6 +194,7 @@ export function buildSalesReport(
         orders: new Set<string>(),
       };
       current.name = item.name || current.name;
+      if (!current.imageUrl && item.imageUrl) current.imageUrl = item.imageUrl;
       current.quantity += item.quantity;
       current.revenue += lineTotal;
       current.orders.add(order.id);

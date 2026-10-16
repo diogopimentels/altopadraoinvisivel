@@ -4,12 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { useCartStore } from "@/store/useCartStore";
 import { X, Minus, Plus, Trash } from "@phosphor-icons/react";
 import { CheckoutForm } from "./CheckoutForm";
+import { discountedSubtotal, lineUnit, useCrossSell } from "@/lib/useCrossSell";
+
+const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 export function CartDrawer() {
-  const { isOpen, toggleCart, items, updateQuantity, removeItem, totalPrice } = useCartStore();
+  const { isOpen, toggleCart, items, updateQuantity, removeItem } = useCartStore();
   const [step, setStep] = useState<'cart' | 'checkout'>('cart');
   const panelRef = useRef<HTMLDivElement>(null);
-  const total = totalPrice();
+  const priced = useCrossSell(items);
+  const total = discountedSubtotal(items, priced);
 
   const handleClose = () => {
     toggleCart();
@@ -165,7 +169,10 @@ export function CartDrawer() {
                   <p>Seu carrinho está vazio.</p>
                 </div>
               ) : (
-                items.map((item) => (
+                items.map((item) => {
+                  const offer = priced.get(item.id);
+                  const unit = lineUnit(priced, item);
+                  return (
                   <div key={item.id} className="flex gap-4 p-4 border border-gray-100 rounded-lg bg-[var(--color-loja-surface)] min-w-0">
                     <div className="w-20 h-20 bg-gray-200 rounded-md shrink-0 flex items-center justify-center overflow-hidden">
                       {item.imageUrl ? (
@@ -184,9 +191,17 @@ export function CartDrawer() {
                       </div>
 
                       <div className="flex justify-between items-end mt-2 gap-2">
-                        <p className="font-bold text-sm shrink-0">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price)}
-                        </p>
+                        <div className="min-w-0">
+                          {offer && offer.discountPercent > 0 && (
+                            <p className="text-[11px] text-gray-400 line-through">{brl.format(offer.originalPrice)}</p>
+                          )}
+                          <p className="font-bold text-sm shrink-0">{brl.format(unit)}</p>
+                          {offer && offer.discountPercent > 0 && (
+                            <p className="text-[10px] font-bold text-emerald-700">
+                              {offer.discountPercent}% off{offer.triggerName ? ` com ${offer.triggerName}` : ""}
+                            </p>
+                          )}
+                        </div>
 
                         <div className="flex items-center gap-3 bg-[var(--color-loja-bg)] rounded-full px-2 py-1 border border-gray-200 shrink-0">
                           <button type="button" onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-1" aria-label="Diminuir">
@@ -200,7 +215,8 @@ export function CartDrawer() {
                       </div>
                     </div>
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
 
@@ -209,7 +225,7 @@ export function CartDrawer() {
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-[var(--color-loja-muted)]">Total</span>
                   <span className="text-xl font-bold">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}
+                    {brl.format(total)}
                   </span>
                 </div>
                 <button

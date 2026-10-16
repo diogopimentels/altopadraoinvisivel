@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { ProductData } from "@/app/api/products/route";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { OrdersList } from "@/components/admin/OrdersList";
-import { Plus, Star, PencilSimple, Trash, Storefront, ShoppingBag, Truck, ChartBar } from "@phosphor-icons/react";
+import { Plus, Star, PencilSimple, Trash, Storefront, ShoppingBag, Truck, ChartBar, Tag } from "@phosphor-icons/react";
 import { logoutAction } from "./actions";
 import { SuppliersList } from "@/components/admin/SuppliersList";
 import { SalesMetrics } from "@/components/admin/SalesMetrics";
+import { CrossSellRules } from "@/components/admin/CrossSellRules";
 import { MelhorEnvioToken } from "@/components/admin/MelhorEnvioToken";
 
 export default function AdminPage() {
@@ -15,7 +16,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<ProductData | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'suppliers' | 'metrics'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'suppliers' | 'metrics' | 'offers'>('products');
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
@@ -171,6 +172,14 @@ export default function AdminPage() {
           <ShoppingBag size={18} weight={activeTab === 'orders' ? 'fill' : 'regular'} /> Pedidos
         </button>
         <button
+          onClick={() => setActiveTab('offers')}
+          className={`flex items-center gap-2 px-4 py-2 font-bold text-sm transition-all border-b-2 shrink-0 ${
+            activeTab === 'offers' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          <Tag size={18} weight={activeTab === 'offers' ? 'fill' : 'regular'} /> Ofertas
+        </button>
+        <button
           onClick={() => setActiveTab('metrics')}
           className={`flex items-center gap-2 px-4 py-2 font-bold text-sm transition-all border-b-2 shrink-0 ${
             activeTab === 'metrics' ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-gray-600'
@@ -182,6 +191,8 @@ export default function AdminPage() {
 
       {activeTab === 'metrics' ? (
         <SalesMetrics />
+      ) : activeTab === 'offers' ? (
+        <CrossSellRules />
       ) : activeTab === 'orders' ? (
         <OrdersList />
       ) : activeTab === 'suppliers' ? (
@@ -265,6 +276,8 @@ export default function AdminPage() {
                     }}
                     className="w-5 h-5 rounded border-gray-300 text-[var(--color-loja-cta)] focus:ring-[var(--color-loja-cta)] cursor-pointer shrink-0"
                   />
+
+                  <span className="font-mono text-[10px] leading-tight text-gray-500 shrink-0 max-w-[5.5rem] break-all">{product.id}</span>
                   
                   {/* Thumbnail da primeira imagem */}
                   <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden shrink-0 relative">

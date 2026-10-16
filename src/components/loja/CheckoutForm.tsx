@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useCartStore } from "@/store/useCartStore";
+import { discountedSubtotal, useCrossSell } from "@/lib/useCrossSell";
 
 interface CheckoutFormProps {
   onBack: () => void;
@@ -9,6 +10,8 @@ interface CheckoutFormProps {
 
 export function CheckoutForm({ onBack }: CheckoutFormProps) {
   const { items, clearCart, shippingOption, setShippingOption } = useCartStore();
+  const priced = useCrossSell(items);
+  const payable = discountedSubtotal(items, priced) + (shippingOption ? shippingOption.price : 0);
   const [loading, setLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
   const [shippingOptions, setShippingOptions] = useState<any[]>([]);
@@ -324,7 +327,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
           disabled={loading || items.length === 0 || !shippingOption || !form.name || !form.phone || form.cep.replace(/\D/g, "").length !== 8}
           className="w-full bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] font-extrabold py-4 rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:scale-100"
         >
-          {loading ? "Redirecionando..." : `Pagar ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(items.reduce((acc, item) => acc + (item.price * item.quantity), 0) + (shippingOption ? shippingOption.price : 0))} ➔`}
+          {loading ? "Redirecionando..." : `Pagar ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payable)} ➔`}
         </button>
       </div>
     </div>

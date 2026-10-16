@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { getTrustedAppOrigin } from '@/lib/auth';
 import { quoteShipping } from '@/lib/shippingQuote';
+import { applyCrossSell, type CrossSellRule } from '@/lib/crossSell';
 
 export async function POST(request: Request) {
   try {
@@ -48,6 +49,8 @@ export async function POST(request: Request) {
       height: number;
       length: number;
       imageUrl?: string;
+      originalPrice?: number;
+      discountPercent?: number;
     }[] = [];
 
     for (const raw of items as any[]) {
@@ -85,6 +88,29 @@ export async function POST(request: Request) {
         length: Number(product.length ?? 20),
         imageUrl: Array.isArray(product.images) ? product.images[0] : undefined,
       });
+    }
+
+    const { data: ruleRows, error: rulesError } = await admin
+      .from('cross_sell_rules')
+      .select('trigger_product_id, target_product_id, discount_percent')
+      .eq('active', true);
+    if (!rulesError && ruleRows && ruleRows.length > 0) {
+      const nameById = new Map((productsDb || []).map((product) => [product.id, product.name]));
+      const rules: CrossSellRule[] = ruleRows.map((row) => ({
+        id: `${row.trigger_product_id}:${row.target_product_id}`,
+        triggerProductId: row.trigger_product_id,
+        targetProductId: row.target_product_id,
+        discountPercent: Number(row.discount_percent),
+        triggerName: nameById.get(row.trigger_product_id) || undefined,
+      }));
+      const priced = applyCrossSell(trustedItems, rules);
+      for (const item of trustedItems) {
+        const line = priced.get(item.id);
+        if (!line || line.discountPercent <= 0) continue;
+        item.originalPrice = line.originalPrice;
+        item.discountPercent = line.discountPercent;
+        item.price = line.unitPrice;
+      }
     }
 
     const items_total = trustedItems.reduce(

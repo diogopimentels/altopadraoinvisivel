@@ -20,6 +20,7 @@ const presets: { id: PeriodPreset; label: string }[] = [
 
 export function SalesMetrics() {
   const [orders, setOrders] = useState<Record<string, unknown>[]>([]);
+  const [photos, setPhotos] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [preset, setPreset] = useState<PeriodPreset>("all");
@@ -34,12 +35,22 @@ export function SalesMetrics() {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch("/api/orders");
+        const [res, productRes] = await Promise.all([fetch("/api/orders"), fetch("/api/products")]);
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data?.error || "Não foi possível carregar as vendas.");
         }
         if (!cancelled) setOrders(Array.isArray(data) ? data : []);
+        if (productRes.ok) {
+          const products = await productRes.json();
+          if (!cancelled && Array.isArray(products)) {
+            const next: Record<string, string> = {};
+            for (const product of products) {
+              if (product?.id && product.images?.[0]) next[product.id] = product.images[0];
+            }
+            setPhotos(next);
+          }
+        }
       } catch (err) {
         if (!cancelled) {
           setOrders([]);
@@ -184,6 +195,7 @@ export function SalesMetrics() {
             <thead className="bg-white text-[11px] uppercase tracking-wide text-gray-500">
               <tr>
                 <th className="px-3 py-2 font-bold">ID</th>
+                <th className="px-3 py-2 font-bold">Foto</th>
                 <th className="px-3 py-2 font-bold">Produto</th>
                 <th className="px-3 py-2 font-bold">Qtd</th>
                 <th className="px-3 py-2 font-bold">Pedidos</th>
@@ -195,7 +207,7 @@ export function SalesMetrics() {
             <tbody>
               {report.products.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-6 text-center text-gray-500 font-semibold">
+                  <td colSpan={8} className="px-3 py-6 text-center text-gray-500 font-semibold">
                     Nenhuma venda neste período.
                   </td>
                 </tr>
@@ -203,6 +215,7 @@ export function SalesMetrics() {
                 report.products.map((product) => (
                   <tr key={product.id} className="border-t border-gray-100 bg-white">
                     <td className="px-3 py-2 font-mono text-[11px] text-gray-500">{product.id}</td>
+                    <td className="px-3 py-2"><ProductThumb src={photos[product.id] || product.imageUrl} alt={product.name} /></td>
                     <td className="px-3 py-2 font-semibold">{product.name}</td>
                     <td className="px-3 py-2">{product.quantity}</td>
                     <td className="px-3 py-2">{product.orderCount}</td>
@@ -227,6 +240,7 @@ export function SalesMetrics() {
                 <th className="px-3 py-2 font-bold">Pedido</th>
                 <th className="px-3 py-2 font-bold">Cliente</th>
                 <th className="px-3 py-2 font-bold">ID</th>
+                <th className="px-3 py-2 font-bold">Foto</th>
                 <th className="px-3 py-2 font-bold">Produto</th>
                 <th className="px-3 py-2 font-bold">Qtd</th>
                 <th className="px-3 py-2 font-bold">Total</th>
@@ -235,7 +249,7 @@ export function SalesMetrics() {
             <tbody>
               {report.lines.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-6 text-center text-gray-500 font-semibold">
+                  <td colSpan={8} className="px-3 py-6 text-center text-gray-500 font-semibold">
                     Nenhuma venda neste período.
                   </td>
                 </tr>
@@ -246,6 +260,7 @@ export function SalesMetrics() {
                     <td className="px-3 py-2 font-mono text-[11px]">{line.orderId.replace(/^ord_/, "")}</td>
                     <td className="px-3 py-2">{line.customerName}</td>
                     <td className="px-3 py-2 font-mono text-[11px] text-gray-500">{line.productId}</td>
+                    <td className="px-3 py-2"><ProductThumb src={photos[line.productId] || line.imageUrl} alt={line.productName} /></td>
                     <td className="px-3 py-2 font-semibold">
                       {line.productName}
                       {status === "all" && line.paymentStatus !== "paid" && (
@@ -263,6 +278,18 @@ export function SalesMetrics() {
       </section>
 
       <p className="text-[11px] text-gray-400 print:text-black">Gerado em {report.generatedAt}</p>
+    </div>
+  );
+}
+
+function ProductThumb({ src, alt }: { src?: string; alt: string }) {
+  return (
+    <div className="w-10 h-10 rounded-md bg-gray-200 overflow-hidden shrink-0">
+      {src ? (
+        <img src={src} alt={alt} className="w-full h-full object-cover" />
+      ) : (
+        <span className="flex h-full items-center justify-center text-[9px] text-gray-500">Sem foto</span>
+      )}
     </div>
   );
 }
