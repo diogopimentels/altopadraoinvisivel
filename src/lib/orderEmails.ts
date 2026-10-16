@@ -99,7 +99,7 @@ export async function sendOrderConfirmation(order: {
      ${itemsTable(order.items || [])}
      <p style="margin:16px 0 0;font-size:15px;">Total: <strong>${money(Number(order.total_amount))}</strong></p>
      <p style="margin:8px 0 0;font-size:13px;color:#555;">Frete: ${money(Number(order.shipping_cost))}</p>
-     <p style="margin:20px 0 0;font-size:15px;line-height:1.5;">Agora é só aguardar o envio. Quando a encomenda sair, mandamos outro e-mail com o código de rastreio.</p>
+     <p style="margin:20px 0 0;font-size:15px;line-height:1.5;">Agora é só aguardar a postagem. Quando a encomenda for postada, mandamos outro e-mail com o código de rastreio.</p>
      <p style="margin:16px 0 0;font-size:13px;color:#666;">Número do pedido: ${esc(number)}</p>`
   );
   await sendEmail(order.customer_email, `Pedido ${number} confirmado`, html);
@@ -116,14 +116,14 @@ export async function sendTrackingEmail(order: {
   const name = esc(String(order.customer_name || '').trim() || 'olá');
   const link = `https://www.melhorrastreio.com.br/rastreio/${encodeURIComponent(code)}`;
   const html = layout(
-    `Pedido ${esc(number)} enviado`,
-    `<p style="margin:0 0 12px;font-size:15px;line-height:1.5;">${name}, sua encomenda saiu para entrega.</p>
+    `Pedido ${esc(number)} postado`,
+    `<p style="margin:0 0 12px;font-size:15px;line-height:1.5;">${name}, sua encomenda foi postada na transportadora. O código abaixo mostra o trajeto até chegar na sua cidade.</p>
      <p style="margin:0 0 8px;font-size:13px;color:#666;">Código de rastreio</p>
      <p style="margin:0 0 16px;font-size:20px;font-weight:bold;letter-spacing:.04em;">${esc(code)}</p>
-     <p style="margin:0;"><a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;font-weight:bold;padding:12px 18px;border-radius:8px;">Acompanhar entrega</a></p>
+     <p style="margin:0;"><a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;font-weight:bold;padding:12px 18px;border-radius:8px;">Acompanhar envio</a></p>
      <p style="margin:16px 0 0;font-size:13px;color:#666;">Número do pedido: ${esc(number)}</p>`
   );
-  await sendEmail(order.customer_email, `Seu pedido ${number} foi enviado`, html);
+  await sendEmail(order.customer_email, `Código de rastreio do pedido ${number}`, html);
 }
 
 /** Manda a confirmação uma vez. Falha de e-mail não desfaz o pagamento. */
