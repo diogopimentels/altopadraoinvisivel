@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle, Copy, Check } from "@phosphor-icons/react";
+import { formatCpf } from "@/lib/cpf";
 
 export function OrdersList() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -29,6 +30,7 @@ export function OrdersList() {
   const handleCopyAddress = (order: any) => {
     const textToCopy = `📦 PEDIDO: ${order.id.replace('ord_', '')}
 👤 NOME: ${order.customer_name}
+🪪 CPF: ${order.customer_cpf ? formatCpf(order.customer_cpf) : "Não informado"}
 📱 WHATSAPP: ${order.customer_phone}
 
 📍 ENDEREÇO DE ENTREGA:
@@ -110,6 +112,9 @@ Cidade/UF: ${order.address_city} - ${order.address_state}
               </h3>
               <p className="text-sm text-gray-500 mt-1">
                 {new Date(order.created_at).toLocaleString('pt-BR')}
+              </p>
+              <p className="text-sm font-semibold text-gray-700 mt-1">
+                CPF: {order.customer_cpf ? formatCpf(order.customer_cpf) : "não informado"}
               </p>
             </div>
             <div className="text-right flex flex-col items-end">

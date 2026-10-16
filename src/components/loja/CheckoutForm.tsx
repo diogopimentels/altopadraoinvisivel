@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useCartStore } from "@/store/useCartStore";
 import { discountedSubtotal, useCrossSell } from "@/lib/useCrossSell";
+import { formatCpf, isValidCpf } from "@/lib/cpf";
 
 interface CheckoutFormProps {
   onBack: () => void;
@@ -19,6 +20,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
 
   const [form, setForm] = useState({
     name: "",
+    cpf: "",
     phone: "",
     email: "",
     cep: "",
@@ -93,6 +95,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
           shippingOption,
           customer: {
             name: form.name,
+            cpf: form.cpf,
             phone: form.phone,
             email: form.email,
           },
@@ -148,6 +151,21 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                 className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors w-full min-w-0"
                 placeholder="Seu nome"
               />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-bold text-gray-700">CPF *</label>
+              <input
+                type="text"
+                required
+                inputMode="numeric"
+                maxLength={14}
+                value={form.cpf}
+                onChange={(e) => setForm({ ...form, cpf: formatCpf(e.target.value) })}
+                className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors w-full min-w-0"
+                placeholder="000.000.000-00"
+              />
+              <p className="text-[11px] text-gray-500">Obrigatório para a etiqueta de envio.</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 min-w-0">
@@ -326,7 +344,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
         <button 
           type="submit"
           form="checkout-form"
-          disabled={loading || items.length === 0 || !shippingOption || !form.name || !form.phone || !form.email.includes("@") || form.cep.replace(/\D/g, "").length !== 8}
+          disabled={loading || items.length === 0 || !shippingOption || !form.name || !form.phone || !form.email.includes("@") || !isValidCpf(form.cpf) || form.cep.replace(/\D/g, "").length !== 8}
           className="w-full bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] font-extrabold py-4 rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:scale-100"
         >
           {loading ? "Redirecionando..." : `Pagar ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payable)} ➔`}

@@ -4,6 +4,7 @@ import { getTrustedAppOrigin } from '@/lib/auth';
 import { quoteShipping } from '@/lib/shippingQuote';
 import { applyCrossSell, type CrossSellRule } from '@/lib/crossSell';
 import { isValidEmail } from '@/lib/orderEmails';
+import { cpfDigits, isValidCpf } from '@/lib/cpf';
 
 export async function POST(request: Request) {
   try {
@@ -14,9 +15,10 @@ export async function POST(request: Request) {
     }
 
     const customerEmail = String(customer?.email || '').trim().toLowerCase();
-    if (!customer?.name || !customer?.phone || !address?.cep || !isValidEmail(customerEmail)) {
+    const customerCpf = cpfDigits(String(customer?.cpf || ''));
+    if (!customer?.name || !customer?.phone || !address?.cep || !isValidEmail(customerEmail) || !isValidCpf(customerCpf)) {
       return NextResponse.json(
-        { error: 'Nome, celular, e-mail e endereço são obrigatórios' },
+        { error: 'Nome, CPF, celular, e-mail e endereço são obrigatórios' },
         { status: 400 }
       );
     }
@@ -145,6 +147,7 @@ export async function POST(request: Request) {
       customer_name: String(customer.name).trim(),
       customer_phone: String(customer.phone).trim(),
       customer_email: customerEmail,
+      customer_cpf: customerCpf,
       address_cep: destinationCep,
       address_street: String(address.street || '').trim(),
       address_number: String(address.number || '').trim(),
@@ -169,6 +172,8 @@ export async function POST(request: Request) {
         if (fallbackError) {
           return NextResponse.json({ error: 'Erro ao registrar pedido.' }, { status: 500 });
         }
+      } else if (String(dbError.message || '').includes('customer_cpf')) {
+        return NextResponse.json({ error: 'Falta criar a coluna customer_cpf no Supabase.' }, { status: 500 });
       } else {
         return NextResponse.json({ error: 'Erro ao registrar pedido.' }, { status: 500 });
       }
@@ -200,6 +205,7 @@ export async function POST(request: Request) {
       payer: {
         name: String(customer.name).trim(),
         email: customerEmail,
+        identification: { type: 'CPF', number: customerCpf },
         phone: customer.phone
           ? { number: String(customer.phone).replace(/\D/g, '') }
           : undefined,
