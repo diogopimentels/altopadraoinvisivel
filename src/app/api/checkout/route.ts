@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { getTrustedAppOrigin } from '@/lib/auth';
 import { quoteShipping } from '@/lib/shippingQuote';
 import { applyCrossSell, type CrossSellRule } from '@/lib/crossSell';
+import { isValidEmail } from '@/lib/orderEmails';
 
 export async function POST(request: Request) {
   try {
@@ -12,9 +13,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Carrinho vazio' }, { status: 400 });
     }
 
-    if (!customer?.name || !customer?.phone || !address?.cep) {
+    const customerEmail = String(customer?.email || '').trim().toLowerCase();
+    if (!customer?.name || !customer?.phone || !address?.cep || !isValidEmail(customerEmail)) {
       return NextResponse.json(
-        { error: 'Dados de cliente e endereço são obrigatórios' },
+        { error: 'Nome, celular, e-mail e endereço são obrigatórios' },
         { status: 400 }
       );
     }
@@ -142,7 +144,7 @@ export async function POST(request: Request) {
       id: order_id,
       customer_name: String(customer.name).trim(),
       customer_phone: String(customer.phone).trim(),
-      customer_email: customer.email || null,
+      customer_email: customerEmail,
       address_cep: destinationCep,
       address_street: String(address.street || '').trim(),
       address_number: String(address.number || '').trim(),
@@ -197,7 +199,7 @@ export async function POST(request: Request) {
       items: preferenceItems,
       payer: {
         name: String(customer.name).trim(),
-        email: customer.email || undefined,
+        email: customerEmail,
         phone: customer.phone
           ? { number: String(customer.phone).replace(/\D/g, '') }
           : undefined,

@@ -135,6 +135,14 @@ Cidade/UF: ${order.address_city} - ${order.address_state}
               ))}
             </div>
           </div>
+          {order.payment_status === "paid" && (
+            <TrackingBox
+              order={order}
+              onUpdate={(patch) => {
+                setOrders((current) => current.map((row) => (row.id === order.id ? { ...row, ...patch } : row)));
+              }}
+            />
+          )}
           <button 
             onClick={() => handleCopyAddress(order)}
             className="w-full flex items-center justify-center gap-2 bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors"
@@ -156,6 +164,76 @@ Cidade/UF: ${order.address_city} - ${order.address_state}
       ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function TrackingBox({
+  order,
+  onUpdate,
+}: {
+  order: {
+    id: string;
+    customer_email?: string | null;
+    tracking_code?: string | null;
+    tracking_sent_at?: string | null;
+  };
+  onUpdate: (patch: { tracking_code: string; tracking_sent_at?: string }) => void;
+}) {
+  const [code, setCode] = useState(order.tracking_code || "");
+  const [sending, setSending] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const send = async () => {
+    setSending(true);
+    setMessage("");
+    setError("");
+    try {
+      const res = await fetch("/api/orders/tracking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: order.id, trackingCode: code }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao enviar");
+      onUpdate({ tracking_code: data.trackingCode, tracking_sent_at: data.trackingSentAt });
+      setCode(data.trackingCode || code);
+      setMessage("E-mail de rastreio enviado.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao enviar");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="mb-4 border border-gray-200 rounded-lg bg-white p-3 flex flex-col gap-2">
+      <p className="text-xs font-bold uppercase text-gray-400">Rastreio por e-mail</p>
+      <p className="text-xs text-gray-500">{order.customer_email || "Pedido sem e-mail"}</p>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <input
+          value={code}
+          onChange={(event) => setCode(event.target.value.toUpperCase())}
+          placeholder="Código de rastreio"
+          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-semibold tracking-wide"
+        />
+        <button
+          type="button"
+          onClick={send}
+          disabled={sending || code.trim().length < 5 || !order.customer_email}
+          className="bg-black text-white text-sm font-bold px-4 py-2 rounded-lg disabled:opacity-50"
+        >
+          {sending ? "Enviando..." : "Enviar rastreio"}
+        </button>
+      </div>
+      {order.tracking_sent_at && (
+        <p className="text-xs text-green-700 font-semibold">
+          Último envio: {new Date(order.tracking_sent_at).toLocaleString("pt-BR")}
+        </p>
+      )}
+      {message && <p className="text-xs font-semibold text-green-700">{message}</p>}
+      {error && <p className="text-xs font-semibold text-red-600">{error}</p>}
     </div>
   );
 }

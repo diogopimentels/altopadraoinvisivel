@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { sendConfirmationForPaidOrder } from '@/lib/orderEmails';
 
 function verifyWebhookSignature(request: Request, url: URL): boolean {
   const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
@@ -172,27 +173,24 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'order not found' }, { status: 404 });
       }
 
-      if (order.payment_status === 'paid') {
-        return NextResponse.json({ success: true, already_paid: true }, { status: 200 });
+      if (order.payment_status !== 'paid') {
+        const paidAmount = Number(payment.transaction_amount);
+        const expected = Number(order.total_amount);
+        // Tolerância de 0.05 por arredondamento
+        if (Number.isFinite(paidAmount) && Number.isFinite(expected) && Math.abs(paidAmount - expected) > 0.05) {
+          console.error('Valor pago diverge do pedido', {
+            orderId,
+            paidAmount,
+            expected,
+            paymentId: payment.id,
+          });
+          return NextResponse.json({ error: 'amount mismatch' }, { status: 409 });
+        }
+
+        await markOrderPaid(String(orderId), payment.id);
       }
 
-      const paidAmount = Number(payment.transaction_amount);
-      const expected = Number(order.total_amount);
-      // Tolerância de 0.05 por arredondamento
-      if (Number.isFinite(paidAmount) && Number.isFinite(expected) && Math.abs(paidAmount - expected) > 0.05) {
-        console.error('Valor pago diverge do pedido', {
-          orderId,
-          paidAmount,
-          expected,
-          paymentId: payment.id,
-        });
-        return NextResponse.json({ error: 'amount mismatch' }, { status: 409 });
-      }
-
-      const result = await markOrderPaid(String(orderId), payment.id);
-      if (result.already_paid) {
-        return NextResponse.json({ success: true, already_paid: true }, { status: 200 });
-      }
+      await sendConfirmationForPaidOrder(String(orderId), payment?.payer?.email);
     }
 
     return NextResponse.json({ success: true }, { status: 200 });

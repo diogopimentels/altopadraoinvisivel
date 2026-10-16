@@ -168,13 +168,15 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
                 />
               </div>
               <div className="flex flex-col gap-1 flex-1 min-w-0">
-                <label className="text-sm font-bold text-gray-700">E-mail (Opcional)</label>
+                <label className="text-sm font-bold text-gray-700">E-mail *</label>
                 <input 
-                  type="email" 
+                  type="email"
+                  required
                   value={form.email} onChange={e => setForm({...form, email: e.target.value})}
                   className="border border-gray-300 rounded-lg p-3 outline-none focus:border-black transition-colors w-full min-w-0"
                   placeholder="seu@email.com"
                 />
+                <p className="text-[11px] text-gray-500">A confirmação do pedido e o código de rastreio chegam aqui.</p>
               </div>
             </div>
           </div>
@@ -324,7 +326,7 @@ export function CheckoutForm({ onBack }: CheckoutFormProps) {
         <button 
           type="submit"
           form="checkout-form"
-          disabled={loading || items.length === 0 || !shippingOption || !form.name || !form.phone || form.cep.replace(/\D/g, "").length !== 8}
+          disabled={loading || items.length === 0 || !shippingOption || !form.name || !form.phone || !form.email.includes("@") || form.cep.replace(/\D/g, "").length !== 8}
           className="w-full bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] font-extrabold py-4 rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:scale-100"
         >
           {loading ? "Redirecionando..." : `Pagar ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payable)} ➔`}

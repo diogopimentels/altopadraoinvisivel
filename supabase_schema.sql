@@ -159,3 +159,7 @@ create table if not exists cross_sell_rules (
 );
 
 alter table cross_sell_rules enable row level security;
+
+alter table orders add column if not exists tracking_code text;
+alter table orders add column if not exists tracking_sent_at timestamptz;
+alter table orders add column if not exists confirmation_email_sent_at timestamptz;
