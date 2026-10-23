@@ -1,11 +1,17 @@
 import { supabase } from "@/lib/supabase";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ProductClient } from "./ProductClient";
 import Link from "next/link";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { cookies } from 'next/headers';
+import { mercadoLivreDestination } from "@/lib/mercadoLivre";
 
 export const dynamic = 'force-dynamic';
+
+type ProductDestination = {
+  checkout_mode?: string | null;
+  mercado_livre_url?: string | null;
+};
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,7 +25,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     .select(
       isAdmin
         ? '*'
-        : 'id, name, price, images, isFeatured, category, description, weight, width, height, length, is_published, free_shipping, stock, created_at'
+        : 'id, name, price, images, isFeatured, category, description, weight, width, height, length, is_published, free_shipping, stock, checkout_mode, mercado_livre_url, created_at'
     )
     .eq('id', id);
 
@@ -32,6 +38,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   if (error || !product) {
     notFound();
   }
+
+  const resolvedProduct = product as unknown as ProductDestination;
+  const mercadoLivreUrl = mercadoLivreDestination(
+    resolvedProduct.checkout_mode,
+    resolvedProduct.mercado_livre_url
+  );
+  if (mercadoLivreUrl) redirect(mercadoLivreUrl);
 
   return (
     <div className="flex flex-col gap-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">

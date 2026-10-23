@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     const productIds = [...new Set((items as any[]).map((i) => String(i.id)))];
     const { data: productsDb, error: productsError } = await admin
       .from('products')
-      .select('id, name, price, weight, width, height, length, supplier_id, is_published, images, stock')
+      .select('id, name, price, weight, width, height, length, supplier_id, is_published, images, stock, checkout_mode')
       .in('id', productIds);
 
     if (productsError) throw productsError;
@@ -62,6 +62,13 @@ export async function POST(request: Request) {
       if (!product || !product.is_published) {
         return NextResponse.json(
           { error: `Produto indisponível: ${raw.id}` },
+          { status: 400 }
+        );
+      }
+
+      if (product.checkout_mode === 'mercado_livre') {
+        return NextResponse.json(
+          { error: `"${product.name}" deve ser comprado pelo anúncio do Mercado Livre.` },
           { status: 400 }
         );
       }

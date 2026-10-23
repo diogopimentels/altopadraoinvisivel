@@ -59,6 +59,8 @@ export function ProductList({ products }: ProductListProps) {
             supplier_id={product.supplier_id}
             free_shipping={product.free_shipping}
             stock={product.stock}
+            checkout_mode={product.checkout_mode}
+            mercado_livre_url={product.mercado_livre_url}
           />
         ))}
         {filteredProducts.length === 0 && (

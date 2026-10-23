@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ProductData } from "@/app/api/products/route";
 import type { SupplierData } from "@/app/api/suppliers/route";
 import { Plus, Trash, X } from "@phosphor-icons/react";
+import { isMercadoLivreUrl } from "@/lib/mercadoLivre";
 
 interface ProductFormProps {
   initialData?: ProductData | null;
@@ -33,6 +34,8 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
     supplier_id: initialData?.supplier_id || "",
     free_shipping: initialData?.free_shipping ?? false,
     stock: initialData?.stock ?? 0,
+    checkout_mode: initialData?.checkout_mode ?? "store",
+    mercado_livre_url: initialData?.mercado_livre_url ?? "",
   });
 
   useEffect(() => {
@@ -92,6 +95,14 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
     const cleanImages = form.images.filter(img => img.trim() !== "");
     const finalForm = { ...form, images: cleanImages };
 
+    if (
+      finalForm.checkout_mode === "mercado_livre" &&
+      !isMercadoLivreUrl(finalForm.mercado_livre_url)
+    ) {
+      alert("Cole um link válido do anúncio no Mercado Livre.");
+      return;
+    }
+
     if (finalForm.isFeatured && !initialData?.isFeatured && currentFeaturedName && currentFeaturedName !== finalForm.name) {
       const confirmed = window.confirm(
         `Atenção: Você vai remover o destaque de "${currentFeaturedName}" e substituí-lo por "${finalForm.name}". Deseja continuar?`
@@ -126,7 +137,61 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
           />
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-3 bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div>
+            <h3 className="font-bold text-sm">Destino da compra</h3>
+            <p className="text-xs text-gray-500 mt-1">
+              Escolha para onde o cliente será levado ao clicar neste produto.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, checkout_mode: "store" })}
+              aria-pressed={form.checkout_mode !== "mercado_livre"}
+              className={`p-4 rounded-xl border-2 text-left transition-colors ${
+                form.checkout_mode !== "mercado_livre"
+                  ? "border-[var(--color-loja-cta)] bg-white"
+                  : "border-gray-200 bg-white hover:border-gray-300"
+              }`}
+            >
+              <span className="block font-bold text-sm">Checkout da loja</span>
+              <span className="block text-xs text-gray-500 mt-1">Usa carrinho, frete e pagamento atuais.</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, checkout_mode: "mercado_livre" })}
+              aria-pressed={form.checkout_mode === "mercado_livre"}
+              className={`p-4 rounded-xl border-2 text-left transition-colors ${
+                form.checkout_mode === "mercado_livre"
+                  ? "border-yellow-500 bg-yellow-50"
+                  : "border-gray-200 bg-white hover:border-gray-300"
+              }`}
+            >
+              <span className="block font-bold text-sm">Anúncio do Mercado Livre</span>
+              <span className="block text-xs text-gray-500 mt-1">Abre o anúncio assim que o cliente clicar.</span>
+            </button>
+          </div>
+
+          {form.checkout_mode === "mercado_livre" && (
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold">Link do anúncio do Mercado Livre *</label>
+              <input
+                type="url"
+                required
+                value={form.mercado_livre_url || ""}
+                onChange={(e) => setForm({ ...form, mercado_livre_url: e.target.value })}
+                className="border border-gray-300 rounded-md px-3 py-2 text-[var(--color-loja-text)] bg-white"
+                placeholder="https://produto.mercadolivre.com.br/MLB-..."
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Aceita links mercadolivre.com.br, mercadolivre.com e meli.la.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {form.checkout_mode !== "mercado_livre" && <div className="flex flex-col gap-1">
           <label className="text-sm font-semibold">Fornecedor (origem do frete) *</label>
           <select
             required
@@ -146,7 +211,7 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
               Cadastre um fornecedor na aba Fornecedores antes de salvar o produto.
             </p>
           )}
-        </div>
+        </div>}
 
         <div className="flex flex-col gap-1">
           <label className="text-sm font-semibold">Categoria</label>
@@ -184,7 +249,7 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
         </div>
 
         {/* DIMENSIONS & WEIGHT */}
-        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+        {form.checkout_mode !== "mercado_livre" && <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
           <h3 className="font-bold text-sm mb-3">Dimensões e Peso (Para Frete)</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
             <div className="flex flex-col gap-1">
@@ -275,7 +340,7 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
               />
             </span>
           </button>
-        </div>
+        </div>}
 
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center">

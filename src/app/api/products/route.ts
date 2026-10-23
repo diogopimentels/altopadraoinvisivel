@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { requireAdmin } from '@/lib/auth';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
+import { isMercadoLivreUrl, type CheckoutMode } from '@/lib/mercadoLivre';
 
 const productSchema = z.object({
   id: z.string().optional(),
@@ -19,9 +20,30 @@ const productSchema = z.object({
   height: z.number().nullish().transform(val => val ?? 15),
   length: z.number().nullish().transform(val => val ?? 20),
   is_published: z.boolean().default(false),
-  supplier_id: z.string().min(1, "Selecione um fornecedor"),
+  supplier_id: z.string().nullish(),
   free_shipping: z.boolean().default(false),
   stock: z.number().int().nonnegative("Estoque não pode ser negativo").default(0),
+  checkout_mode: z.enum(["store", "mercado_livre"]).default("store"),
+  mercado_livre_url: z.string().trim().max(2048, "O link é muito longo").nullish(),
+}).superRefine((product, ctx) => {
+  if (product.checkout_mode === "store" && !product.supplier_id) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["supplier_id"],
+      message: "Selecione um fornecedor",
+    });
+  }
+
+  if (
+    product.checkout_mode === "mercado_livre" &&
+    !isMercadoLivreUrl(product.mercado_livre_url)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["mercado_livre_url"],
+      message: "Cole um link válido do Mercado Livre",
+    });
+  }
 });
 
 export interface ProductData {
@@ -40,6 +62,8 @@ export interface ProductData {
   supplier_id?: string | null;
   free_shipping?: boolean;
   stock?: number;
+  checkout_mode?: CheckoutMode;
+  mercado_livre_url?: string | null;
 }
 
 export async function GET() {
@@ -112,9 +136,13 @@ export async function POST(request: Request) {
         height: body.height ?? 15,
         length: body.length ?? 20,
         is_published: body.is_published,
-        supplier_id: body.supplier_id,
-        free_shipping: body.free_shipping ?? false,
+        supplier_id: body.checkout_mode === 'store' ? body.supplier_id : null,
+        free_shipping: body.checkout_mode === 'store' ? (body.free_shipping ?? false) : false,
         stock: Math.max(0, Math.floor(Number(body.stock) || 0)),
+        checkout_mode: body.checkout_mode,
+        mercado_livre_url: body.checkout_mode === 'mercado_livre'
+          ? body.mercado_livre_url?.trim()
+          : null,
       })
       .select()
       .single();
