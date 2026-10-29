@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ProductData } from "@/app/api/products/route";
 import type { SupplierData } from "@/app/api/suppliers/route";
 import { Plus, Trash, X } from "@phosphor-icons/react";
-import { isMercadoLivreUrl } from "@/lib/mercadoLivre";
+import { isValidExternalUrl } from "@/lib/mercadoLivre";
 
 interface ProductFormProps {
   initialData?: ProductData | null;
@@ -34,7 +34,8 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
     supplier_id: initialData?.supplier_id || "",
     free_shipping: initialData?.free_shipping ?? false,
     stock: initialData?.stock ?? 0,
-    checkout_mode: initialData?.checkout_mode ?? "store",
+    // Normaliza registros legados gravados como "mercado_livre" para "external_link"
+    checkout_mode: (initialData?.checkout_mode as string) === "mercado_livre" ? "external_link" : (initialData?.checkout_mode ?? "store"),
     mercado_livre_url: initialData?.mercado_livre_url ?? "",
   });
 
@@ -96,10 +97,10 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
     const finalForm = { ...form, images: cleanImages };
 
     if (
-      finalForm.checkout_mode === "mercado_livre" &&
-      !isMercadoLivreUrl(finalForm.mercado_livre_url)
+      finalForm.checkout_mode === "external_link" &&
+      !isValidExternalUrl(finalForm.mercado_livre_url)
     ) {
-      alert("Cole um link válido do anúncio no Mercado Livre.");
+      alert("Cole um link externo válido (https://...).");
       return;
     }
 
@@ -148,9 +149,9 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
             <button
               type="button"
               onClick={() => setForm({ ...form, checkout_mode: "store" })}
-              aria-pressed={form.checkout_mode !== "mercado_livre"}
+              aria-pressed={form.checkout_mode !== "external_link"}
               className={`p-4 rounded-xl border-2 text-left transition-colors ${
-                form.checkout_mode !== "mercado_livre"
+                form.checkout_mode !== "external_link"
                   ? "border-[var(--color-loja-cta)] bg-white"
                   : "border-gray-200 bg-white hover:border-gray-300"
               }`}
@@ -160,38 +161,38 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
             </button>
             <button
               type="button"
-              onClick={() => setForm({ ...form, checkout_mode: "mercado_livre" })}
-              aria-pressed={form.checkout_mode === "mercado_livre"}
+              onClick={() => setForm({ ...form, checkout_mode: "external_link" })}
+              aria-pressed={form.checkout_mode === "external_link"}
               className={`p-4 rounded-xl border-2 text-left transition-colors ${
-                form.checkout_mode === "mercado_livre"
+                form.checkout_mode === "external_link"
                   ? "border-yellow-500 bg-yellow-50"
                   : "border-gray-200 bg-white hover:border-gray-300"
               }`}
             >
-              <span className="block font-bold text-sm">Anúncio do Mercado Livre</span>
-              <span className="block text-xs text-gray-500 mt-1">Abre o anúncio assim que o cliente clicar.</span>
+              <span className="block font-bold text-sm">Link externo</span>
+              <span className="block text-xs text-gray-500 mt-1">Abre o link assim que o cliente clicar (ex: Shopee, Mercado Livre, afiliados...).</span>
             </button>
           </div>
 
-          {form.checkout_mode === "mercado_livre" && (
+          {form.checkout_mode === "external_link" && (
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold">Link do anúncio do Mercado Livre *</label>
+              <label className="text-sm font-semibold">Link do produto externo *</label>
               <input
                 type="url"
                 required
                 value={form.mercado_livre_url || ""}
                 onChange={(e) => setForm({ ...form, mercado_livre_url: e.target.value })}
                 className="border border-gray-300 rounded-md px-3 py-2 text-[var(--color-loja-text)] bg-white"
-                placeholder="https://produto.mercadolivre.com.br/MLB-..."
+                placeholder="https://..."
               />
               <p className="text-xs text-gray-500 mt-1">
-                Aceita links mercadolivre.com.br, mercadolivre.com e meli.la.
+                Aceita qualquer link externo (Mercado Livre, Shopee, afiliados, etc.).
               </p>
             </div>
           )}
         </div>
 
-        {form.checkout_mode !== "mercado_livre" && <div className="flex flex-col gap-1">
+        {form.checkout_mode !== "external_link" && <div className="flex flex-col gap-1">
           <label className="text-sm font-semibold">Fornecedor (origem do frete) *</label>
           <select
             required
@@ -248,8 +249,7 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
           />
         </div>
 
-        {/* DIMENSIONS & WEIGHT */}
-        {form.checkout_mode !== "mercado_livre" && <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+        {form.checkout_mode !== "external_link" && <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
           <h3 className="font-bold text-sm mb-3">Dimensões e Peso (Para Frete)</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
             <div className="flex flex-col gap-1">
@@ -341,6 +341,38 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
             </span>
           </button>
         </div>}
+
+        {/* FRETE GRÁTIS — visível em qualquer modo de checkout */}
+        <button
+          type="button"
+          onClick={() => setForm({ ...form, free_shipping: !form.free_shipping })}
+          className={`w-full flex items-center justify-between gap-3 p-3 border-2 rounded-xl text-left transition-colors ${
+            form.free_shipping
+              ? "border-emerald-600 bg-emerald-50"
+              : "border-gray-200 bg-white hover:border-gray-300"
+          }`}
+        >
+          <span className="flex flex-col min-w-0">
+            <span className="font-bold text-sm">Frete grátis</span>
+            <span className="text-xs text-gray-500">
+              {form.checkout_mode === "external_link"
+                ? "Exibe o selo de frete grátis no card do produto (a compra é feita no link externo)."
+                : "Cliente não paga frete deste produto no checkout (custo absorvido pela loja)."}
+            </span>
+          </span>
+          <span
+            className={`shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              form.free_shipping ? "bg-emerald-600" : "bg-gray-300"
+            }`}
+            aria-hidden
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                form.free_shipping ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </span>
+        </button>
 
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center">

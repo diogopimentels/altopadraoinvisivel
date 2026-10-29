@@ -1,34 +1,46 @@
-export type CheckoutMode = "store" | "mercado_livre";
+export type CheckoutMode = "store" | "external_link";
 
-const MERCADO_LIVRE_HOSTS = [
-  "mercadolivre.com.br",
-  "mercadolivre.com",
-  "meli.la",
-];
-
-export function isMercadoLivreUrl(value?: string | null) {
+/**
+ * Valida se a string é uma URL https válida (qualquer domínio).
+ * Usada para o modo de link externo (ex: Mercado Livre, Shopee, afiliados, etc.).
+ */
+export function isValidExternalUrl(value?: string | null): boolean {
   if (!value) return false;
-
   try {
     const url = new URL(value);
-    const hostname = url.hostname.toLowerCase();
-
-    return (
-      url.protocol === "https:" &&
-      MERCADO_LIVRE_HOSTS.some(
-        (host) => hostname === host || hostname.endsWith(`.${host}`)
-      )
-    );
+    return url.protocol === "https:";
   } catch {
     return false;
   }
 }
 
+/**
+ * @deprecated Use isValidExternalUrl. Mantido para compatibilidade com dados legados.
+ */
+export function isMercadoLivreUrl(value?: string | null): boolean {
+  return isValidExternalUrl(value);
+}
+
+export function externalLinkDestination(
+  checkoutMode?: CheckoutMode | string | null,
+  externalUrl?: string | null
+) {
+  const isExternal =
+    checkoutMode === "external_link" ||
+    // suporte a registros antigos gravados como "mercado_livre"
+    checkoutMode === "mercado_livre";
+
+  return isExternal && isValidExternalUrl(externalUrl)
+    ? externalUrl!.trim()
+    : null;
+}
+
+/**
+ * @deprecated Use externalLinkDestination. Mantido para compatibilidade.
+ */
 export function mercadoLivreDestination(
   checkoutMode?: CheckoutMode | string | null,
   mercadoLivreUrl?: string | null
 ) {
-  return checkoutMode === "mercado_livre" && isMercadoLivreUrl(mercadoLivreUrl)
-    ? mercadoLivreUrl!.trim()
-    : null;
+  return externalLinkDestination(checkoutMode, mercadoLivreUrl);
 }

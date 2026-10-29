@@ -2,7 +2,7 @@
 
 
 import { useState, useEffect } from "react";
-import { mercadoLivreDestination } from "@/lib/mercadoLivre";
+import { externalLinkDestination } from "@/lib/mercadoLivre";
 
 export function FeaturedProductClient({ data }: { data: any }) {
   const [currentImage, setCurrentImage] = useState(0);
@@ -16,7 +16,7 @@ export function FeaturedProductClient({ data }: { data: any }) {
     }
   }, [data.images]);
 
-  const mercadoLivreUrl = mercadoLivreDestination(data.checkout_mode, data.mercado_livre_url);
+  const externalUrl = externalLinkDestination(data.checkout_mode, data.mercado_livre_url);
 
   return (
     <div className="w-full flex flex-col gap-2 animate-in fade-in zoom-in-95 duration-500">
@@ -25,7 +25,7 @@ export function FeaturedProductClient({ data }: { data: any }) {
       </div>
       
       <a 
-        href={mercadoLivreUrl || data.link || `${process.env.NODE_ENV === "development" ? "http://loja.localhost:3000" : "https://loja.altopadraoinvisivel.com.br"}/produto/${data.id}`}
+        href={externalUrl || data.link || `${process.env.NODE_ENV === "development" ? "http://loja.localhost:3000" : "https://loja.altopadraoinvisivel.com.br"}/produto/${data.id}`}
         className="flex flex-row items-center gap-4 w-full p-2 border border-[var(--color-bio-accent)]/30 rounded-lg bg-[var(--color-bio-surface)] hover:border-[var(--color-bio-accent)] transition-all duration-500 group"
       >
         {data.images && data.images.length > 0 && (
@@ -52,7 +52,7 @@ export function FeaturedProductClient({ data }: { data: any }) {
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.price)}
             </span>
           )}
-          {!mercadoLivreUrl && data.free_shipping && (
+          {data.free_shipping && (
             <span className="mt-1.5 inline-flex w-fit bg-emerald-600 text-white text-[10px] uppercase font-extrabold tracking-wide px-2 py-0.5 rounded">
               Frete grátis
             </span>

@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { requireAdmin } from '@/lib/auth';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
-import { isMercadoLivreUrl, type CheckoutMode } from '@/lib/mercadoLivre';
+import { isValidExternalUrl, type CheckoutMode } from '@/lib/mercadoLivre';
 
 const productSchema = z.object({
   id: z.string().optional(),
@@ -23,7 +23,8 @@ const productSchema = z.object({
   supplier_id: z.string().nullish(),
   free_shipping: z.boolean().default(false),
   stock: z.number().int().nonnegative("Estoque não pode ser negativo").default(0),
-  checkout_mode: z.enum(["store", "mercado_livre"]).default("store"),
+  // Aceita o valor legado "mercado_livre" gravado no banco para retrocompatibilidade
+  checkout_mode: z.enum(["store", "external_link", "mercado_livre"]).default("store"),
   mercado_livre_url: z.string().trim().max(2048, "O link é muito longo").nullish(),
 }).superRefine((product, ctx) => {
   if (product.checkout_mode === "store" && !product.supplier_id) {
@@ -34,14 +35,12 @@ const productSchema = z.object({
     });
   }
 
-  if (
-    product.checkout_mode === "mercado_livre" &&
-    !isMercadoLivreUrl(product.mercado_livre_url)
-  ) {
+  const isExternal = product.checkout_mode === "external_link" || product.checkout_mode === "mercado_livre";
+  if (isExternal && !isValidExternalUrl(product.mercado_livre_url)) {
     ctx.addIssue({
       code: "custom",
       path: ["mercado_livre_url"],
-      message: "Cole um link válido do Mercado Livre",
+      message: "Cole um link externo válido (https://...)",
     });
   }
 });
@@ -62,7 +61,7 @@ export interface ProductData {
   supplier_id?: string | null;
   free_shipping?: boolean;
   stock?: number;
-  checkout_mode?: CheckoutMode;
+  checkout_mode?: CheckoutMode | "mercado_livre";
   mercado_livre_url?: string | null;
 }
 
@@ -137,10 +136,11 @@ export async function POST(request: Request) {
         length: body.length ?? 20,
         is_published: body.is_published,
         supplier_id: body.checkout_mode === 'store' ? body.supplier_id : null,
-        free_shipping: body.checkout_mode === 'store' ? (body.free_shipping ?? false) : false,
+        free_shipping: body.free_shipping ?? false,
         stock: Math.max(0, Math.floor(Number(body.stock) || 0)),
-        checkout_mode: body.checkout_mode,
-        mercado_livre_url: body.checkout_mode === 'mercado_livre'
+        // Normaliza modo legado "mercado_livre" para "external_link" ao salvar
+        checkout_mode: body.checkout_mode === 'mercado_livre' ? 'external_link' : body.checkout_mode,
+        mercado_livre_url: (body.checkout_mode === 'external_link' || body.checkout_mode === 'mercado_livre')
           ? body.mercado_livre_url?.trim()
           : null,
       })
