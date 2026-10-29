@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useCartStore } from "@/store/useCartStore";
 import Link from "next/link";
-import { mercadoLivreDestination, type CheckoutMode } from "@/lib/mercadoLivre";
+import { externalLinkDestination, type CheckoutMode } from "@/lib/mercadoLivre";
 
 interface ProductCardProps {
   id: string;
@@ -38,13 +38,13 @@ export function ProductCard({
 }: ProductCardProps) {
   const { addItem } = useCartStore();
   const [currentImage, setCurrentImage] = useState(0);
-  const mercadoLivreUrl = mercadoLivreDestination(checkout_mode, mercado_livre_url);
-  const productHref = mercadoLivreUrl || `/produto/${id}`;
-  const outOfStock = !mercadoLivreUrl && Number(stock ?? 0) <= 0;
+  const externalUrl = externalLinkDestination(checkout_mode, mercado_livre_url);
+  const productHref = externalUrl || `/produto/${id}`;
+  const outOfStock = !externalUrl && Number(stock ?? 0) <= 0;
 
-  const handleBuy = () => {
-    if (mercadoLivreUrl) {
-      window.location.assign(mercadoLivreUrl);
+    const handleBuy = () => {
+    if (externalUrl) {
+      window.location.assign(externalUrl);
       return;
     }
     if (outOfStock) return;
@@ -63,7 +63,7 @@ export function ProductCard({
 
   return (
     <div className="flex flex-col gap-3 w-full group relative">
-      <Link href={productHref} className="absolute inset-0 z-0" aria-label={mercadoLivreUrl ? `Ver ${name} no Mercado Livre` : `Ver detalhes de ${name}`} />
+      <Link href={productHref} className="absolute inset-0 z-0" aria-label={externalUrl ? `Ver ${name} no link externo` : `Ver detalhes de ${name}`} />
       
       <div className="aspect-square w-full bg-[var(--color-loja-surface)] rounded-md overflow-hidden relative border border-gray-100">
         <Link href={productHref} className="absolute inset-0 z-10" />
@@ -71,7 +71,7 @@ export function ProductCard({
           <span className="absolute top-3 left-3 z-20 bg-red-600 text-white text-xs uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
             Esgotado
           </span>
-        ) : !mercadoLivreUrl && free_shipping ? (
+        ) : free_shipping ? (
           <span className="absolute top-3 left-3 z-20 bg-emerald-600 text-white text-xs uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
             Frete grátis
           </span>
@@ -114,8 +114,8 @@ export function ProductCard({
           </p>
           {outOfStock ? (
             <p className="text-sm font-bold text-red-600 mt-1">Produto esgotado</p>
-          ) : mercadoLivreUrl ? (
-            <p className="text-sm font-bold text-yellow-700 mt-1">Disponível no Mercado Livre</p>
+          ) : externalUrl ? (
+            <p className="text-sm font-bold text-yellow-700 mt-1">Disponível via link externo</p>
           ) : free_shipping ? (
             <p className="text-sm font-bold text-emerald-700 mt-1">Frete grátis neste produto</p>
           ) : null}
@@ -125,7 +125,7 @@ export function ProductCard({
           disabled={outOfStock}
           className="bg-[var(--color-loja-cta)] text-[var(--color-loja-cta-text)] px-4 py-2 rounded-full text-sm font-bold shadow-sm active:scale-95 transition-transform relative z-20 shrink-0 disabled:opacity-40 disabled:active:scale-100"
         >
-          {outOfStock ? "Esgotado" : mercadoLivreUrl ? "Ver anúncio" : "Comprar"}
+          {outOfStock ? "Esgotado" : externalUrl ? "Ver anúncio" : "Comprar"}
         </button>
       </div>
     </div>
