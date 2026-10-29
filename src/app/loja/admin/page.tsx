@@ -306,7 +306,7 @@ export default function AdminPage() {
                           🚧 Rascunho
                         </span>
                       )}
-                      {product.checkout_mode !== 'external_link' && !product.supplier_id && (
+                      {product.checkout_mode !== 'external_link' && product.checkout_mode !== 'mercado_livre' && !product.supplier_id && (
                         <span className="bg-red-100 text-red-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded shrink-0">
                           Sem fornecedor
                         </span>
@@ -316,7 +316,7 @@ export default function AdminPage() {
                           Frete grátis
                         </span>
                       )}
-                      {product.checkout_mode === 'external_link' && (
+                      {(product.checkout_mode === 'external_link' || product.checkout_mode === 'mercado_livre') && (
                         <span className="bg-yellow-100 text-yellow-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded shrink-0">
                           Link externo
                         </span>
@@ -324,7 +324,7 @@ export default function AdminPage() {
                     </h3>
                     <span className="font-extrabold text-[var(--color-loja-text)] mt-1">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
-                      {product.checkout_mode !== 'external_link' && (
+                      {product.checkout_mode !== 'external_link' && product.checkout_mode !== 'mercado_livre' && (
                         <span className={`ml-2 text-xs font-bold ${Number(product.stock) > 0 ? 'text-gray-500' : 'text-red-600'}`}>
                           · Estoque: {product.stock ?? 0}
                         </span>
