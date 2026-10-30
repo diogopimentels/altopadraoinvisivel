@@ -75,7 +75,7 @@ export function CrossSellRules() {
       <div>
         <h2 className="text-lg font-extrabold">Oferta cruzada</h2>
         <p className="text-xs text-gray-500 mt-1">
-          Quem leva um produto ganha desconto em outro, no mesmo carrinho. O valor com desconto é o que vai para o Mercado Pago.
+          Escolha o produto que libera a oferta e, depois, o produto que realmente recebe o desconto. O primeiro continua no preço cheio.
         </p>
         <p className="text-xs font-semibold text-amber-700 mt-2">
           Produtos com link externo não aparecem nas opções, pois não passam pelo carrinho da loja.
@@ -84,7 +84,7 @@ export function CrossSellRules() {
 
       <div className="border border-gray-200 rounded-xl bg-white p-4 flex flex-col gap-3">
         <label className="text-xs font-bold text-gray-600">
-          Se o carrinho tiver
+          1. Produto que libera a oferta (sem desconto)
           <select
             value={triggerProductId}
             onChange={(event) => setTriggerProductId(event.target.value)}
@@ -97,7 +97,7 @@ export function CrossSellRules() {
           </select>
         </label>
         <label className="text-xs font-bold text-gray-600">
-          este sai com desconto
+          2. Produto que recebe o desconto
           <select
             value={targetProductId}
             onChange={(event) => setTargetProductId(event.target.value)}
@@ -110,7 +110,7 @@ export function CrossSellRules() {
           </select>
         </label>
         <label className="text-xs font-bold text-gray-600">
-          Porcentagem
+          3. Desconto aplicado somente no segundo produto
           <input
             type="number"
             min={1}

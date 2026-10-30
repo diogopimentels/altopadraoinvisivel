@@ -20,8 +20,10 @@ create table if not exists products (
   is_published boolean default false,
   free_shipping boolean not null default false,
   stock integer not null default 0,
-  checkout_mode text not null default 'store' check (checkout_mode in ('store', 'mercado_livre')),
+  checkout_mode text not null default 'store' check (checkout_mode in ('store', 'mercado_livre', 'external_link')),
   mercado_livre_url text,
+  external_offer_active boolean not null default false,
+  external_offer_original_price numeric,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -38,11 +40,24 @@ alter table products
   add column if not exists mercado_livre_url text;
 
 alter table products
+  add column if not exists external_offer_active boolean not null default false;
+
+alter table products
+  add column if not exists external_offer_original_price numeric;
+
+alter table products
+  drop constraint if exists products_external_offer_original_price_check;
+
+alter table products
+  add constraint products_external_offer_original_price_check
+  check (external_offer_original_price is null or external_offer_original_price > 0);
+
+alter table products
   drop constraint if exists products_checkout_mode_check;
 
 alter table products
   add constraint products_checkout_mode_check
-  check (checkout_mode in ('store', 'mercado_livre'));
+  check (checkout_mode in ('store', 'mercado_livre', 'external_link'));
 
 -- Cria a tabela de pedidos
 create table if not exists orders (

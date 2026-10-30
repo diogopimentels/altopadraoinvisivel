@@ -26,6 +26,8 @@ const productSchema = z.object({
   // Aceita o valor legado "mercado_livre" gravado no banco para retrocompatibilidade
   checkout_mode: z.enum(["store", "external_link", "mercado_livre"]).default("store"),
   mercado_livre_url: z.string().trim().max(2048, "O link é muito longo").nullish(),
+  external_offer_active: z.boolean().default(false),
+  external_offer_original_price: z.number().positive("O preço anterior deve ser maior que zero").nullish(),
 }).superRefine((product, ctx) => {
   if (product.checkout_mode === "store" && !product.supplier_id) {
     ctx.addIssue({
@@ -41,6 +43,18 @@ const productSchema = z.object({
       code: "custom",
       path: ["mercado_livre_url"],
       message: "Cole um link externo válido (https://...)",
+    });
+  }
+
+  if (
+    isExternal &&
+    product.external_offer_active &&
+    (!product.external_offer_original_price || product.external_offer_original_price <= product.price)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["external_offer_original_price"],
+      message: "O preço anterior deve ser maior que o preço promocional",
     });
   }
 });
@@ -63,6 +77,8 @@ export interface ProductData {
   stock?: number;
   checkout_mode?: CheckoutMode | "mercado_livre";
   mercado_livre_url?: string | null;
+  external_offer_active?: boolean;
+  external_offer_original_price?: number | null;
 }
 
 export async function GET() {
@@ -143,6 +159,14 @@ export async function POST(request: Request) {
         mercado_livre_url: (body.checkout_mode === 'external_link' || body.checkout_mode === 'mercado_livre')
           ? body.mercado_livre_url?.trim()
           : null,
+        external_offer_active:
+          (body.checkout_mode === 'external_link' || body.checkout_mode === 'mercado_livre')
+            ? body.external_offer_active
+            : false,
+        external_offer_original_price:
+          (body.checkout_mode === 'external_link' || body.checkout_mode === 'mercado_livre') && body.external_offer_active
+            ? body.external_offer_original_price
+            : null,
       })
       .select()
       .single();

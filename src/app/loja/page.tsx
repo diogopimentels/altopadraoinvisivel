@@ -15,7 +15,7 @@ export default async function LojaPage() {
 
     let query = supabase
       .from('products')
-      .select('id, name, price, images, isFeatured, category, description, weight, width, height, length, is_published, free_shipping, stock, checkout_mode, mercado_livre_url, created_at')
+      .select('*')
       .order('created_at', { ascending: false });
       
     if (!isAdmin) {
@@ -25,7 +25,9 @@ export default async function LojaPage() {
     const { data, error } = await query;
       
     if (!error && data) {
-      products = data;
+      products = isAdmin
+        ? data
+        : data.map(({ supplier_id: _supplierId, ...product }) => product);
     }
   } catch (error) {
     console.error("Erro ao ler produtos do Supabase:", error);

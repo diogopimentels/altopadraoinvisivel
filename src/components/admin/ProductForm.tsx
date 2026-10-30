@@ -5,6 +5,7 @@ import { ProductData } from "@/app/api/products/route";
 import type { SupplierData } from "@/app/api/suppliers/route";
 import { Plus, Trash, X } from "@phosphor-icons/react";
 import { isValidExternalUrl } from "@/lib/mercadoLivre";
+import { externalOfferDetails } from "@/lib/externalOffer";
 
 interface ProductFormProps {
   initialData?: ProductData | null;
@@ -37,7 +38,11 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
     // Normaliza registros legados gravados como "mercado_livre" para "external_link"
     checkout_mode: (initialData?.checkout_mode as string) === "mercado_livre" ? "external_link" : (initialData?.checkout_mode ?? "store"),
     mercado_livre_url: initialData?.mercado_livre_url ?? "",
+    external_offer_active: initialData?.external_offer_active ?? false,
+    external_offer_original_price: initialData?.external_offer_original_price ?? null,
   });
+
+  const externalOffer = externalOfferDetails(form);
 
   useEffect(() => {
     fetch("/api/suppliers")
@@ -101,6 +106,15 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
       !isValidExternalUrl(finalForm.mercado_livre_url)
     ) {
       alert("Cole um link externo válido (https://...).");
+      return;
+    }
+
+    if (
+      finalForm.checkout_mode === "external_link" &&
+      finalForm.external_offer_active &&
+      (!finalForm.external_offer_original_price || finalForm.external_offer_original_price <= finalForm.price)
+    ) {
+      alert("O preço anterior precisa ser maior que o preço promocional atual.");
       return;
     }
 
@@ -175,20 +189,77 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
           </div>
 
           {form.checkout_mode === "external_link" && (
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold">Link do produto externo *</label>
-              <input
-                type="url"
-                required
-                value={form.mercado_livre_url || ""}
-                onChange={(e) => setForm({ ...form, mercado_livre_url: e.target.value })}
-                className="border border-gray-300 rounded-md px-3 py-2 text-[var(--color-loja-text)] bg-white"
-                placeholder="https://..."
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Aceita qualquer link externo (Mercado Livre, Shopee, afiliados, etc.).
-              </p>
-            </div>
+            <>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-semibold">Link do produto externo *</label>
+                <input
+                  type="url"
+                  required
+                  value={form.mercado_livre_url || ""}
+                  onChange={(e) => setForm({ ...form, mercado_livre_url: e.target.value })}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-[var(--color-loja-text)] bg-white"
+                  placeholder="https://..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Aceita qualquer link externo (Mercado Livre, Shopee, afiliados, etc.).
+                </p>
+              </div>
+
+              <div className="border border-rose-200 bg-rose-50 rounded-xl p-3 flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, external_offer_active: !form.external_offer_active })}
+                  className="w-full flex items-center justify-between gap-3 text-left"
+                  aria-pressed={Boolean(form.external_offer_active)}
+                >
+                  <span className="flex flex-col min-w-0">
+                    <span className="font-bold text-sm text-rose-950">Destacar promoção externa</span>
+                    <span className="text-xs text-rose-800 mt-0.5">
+                      Mostra o desconto na vitrine. Não altera o carrinho nem o preço da plataforma externa.
+                    </span>
+                  </span>
+                  <span
+                    className={`shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      form.external_offer_active ? "bg-rose-600" : "bg-gray-300"
+                    }`}
+                    aria-hidden
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        form.external_offer_active ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </span>
+                </button>
+
+                {form.external_offer_active && (
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-semibold text-rose-950">Preço anterior (R$) *</label>
+                    <input
+                      type="number"
+                      required
+                      min="0.01"
+                      step="0.01"
+                      value={form.external_offer_original_price ?? ""}
+                      onChange={(e) => setForm({
+                        ...form,
+                        external_offer_original_price: e.target.value ? Number(e.target.value) : null,
+                      })}
+                      className="border border-rose-200 rounded-md px-3 py-2 text-[var(--color-loja-text)] bg-white"
+                      placeholder="Ex: 29.90"
+                    />
+                    <p className="text-xs text-rose-800">
+                      O preço atual informado abaixo será exibido como promocional.
+                    </p>
+                    {externalOffer && (
+                      <p className="text-xs font-extrabold text-rose-700 mt-1">
+                        A vitrine mostrará {externalOffer.discountPercent}% OFF.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
 
@@ -237,7 +308,11 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-semibold">Preço (R$)</label>
+          <label className="text-sm font-semibold">
+            {form.checkout_mode === "external_link" && form.external_offer_active
+              ? "Preço promocional atual (R$)"
+              : "Preço (R$)"}
+          </label>
           <input 
             type="number" 
             required
@@ -312,34 +387,6 @@ export function ProductForm({ initialData, onSave, onCancel, currentFeaturedName
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, free_shipping: !form.free_shipping })}
-            className={`mt-4 w-full flex items-center justify-between gap-3 p-3 border-2 rounded-xl text-left transition-colors ${
-              form.free_shipping
-                ? "border-emerald-600 bg-emerald-50"
-                : "border-gray-200 bg-white hover:border-gray-300"
-            }`}
-          >
-            <span className="flex flex-col min-w-0">
-              <span className="font-bold text-sm">Frete grátis</span>
-              <span className="text-xs text-gray-500">
-                Cliente não paga frete deste produto no checkout (custo absorvido pela loja).
-              </span>
-            </span>
-            <span
-              className={`shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                form.free_shipping ? "bg-emerald-600" : "bg-gray-300"
-              }`}
-              aria-hidden
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  form.free_shipping ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </span>
-          </button>
         </div>}
 
         {/* FRETE GRÁTIS — visível em qualquer modo de checkout */}

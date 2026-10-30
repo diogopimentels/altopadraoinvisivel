@@ -66,9 +66,9 @@ export async function POST(request: Request) {
         );
       }
 
-      if (product.checkout_mode === 'mercado_livre') {
+      if (product.checkout_mode && product.checkout_mode !== 'store') {
         return NextResponse.json(
-          { error: `"${product.name}" deve ser comprado pelo anúncio do Mercado Livre.` },
+          { error: `"${product.name}" deve ser comprado pelo link externo.` },
           { status: 400 }
         );
       }

@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { externalLinkDestination } from "@/lib/mercadoLivre";
+import { externalOfferDetails } from "@/lib/externalOffer";
 
 export function FeaturedProductClient({ data }: { data: any }) {
   const [currentImage, setCurrentImage] = useState(0);
@@ -17,6 +18,7 @@ export function FeaturedProductClient({ data }: { data: any }) {
   }, [data.images]);
 
   const externalUrl = externalLinkDestination(data.checkout_mode, data.mercado_livre_url);
+  const externalOffer = externalUrl ? externalOfferDetails(data) : null;
 
   return (
     <div className="w-full flex flex-col gap-2 animate-in fade-in zoom-in-95 duration-500">
@@ -48,8 +50,20 @@ export function FeaturedProductClient({ data }: { data: any }) {
         <div className="flex flex-col justify-center flex-1 pr-2 min-w-0">
           <h3 className="font-bold text-base leading-tight text-[var(--color-bio-text)] line-clamp-2">{data.name}</h3>
           {data.price && (
-            <span className="font-medium text-sm mt-1 text-[var(--color-bio-accent)]">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.price)}
+            <span className="flex flex-wrap items-baseline gap-2 mt-1">
+              {externalOffer && (
+                <span className="text-xs text-gray-500 line-through">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(externalOffer.originalPrice)}
+                </span>
+              )}
+              <span className={`font-medium text-sm ${externalOffer ? "text-rose-400 font-extrabold" : "text-[var(--color-bio-accent)]"}`}>
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.price)}
+              </span>
+            </span>
+          )}
+          {externalOffer && (
+            <span className="mt-1.5 inline-flex w-fit bg-rose-600 text-white text-[10px] uppercase font-extrabold tracking-wide px-2 py-0.5 rounded">
+              Oferta · {externalOffer.discountPercent}% OFF
             </span>
           )}
           {data.free_shipping && (

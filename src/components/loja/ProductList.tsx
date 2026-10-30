@@ -64,6 +64,8 @@ export function ProductList({ products }: ProductListProps) {
             stock={product.stock}
             checkout_mode={product.checkout_mode}
             mercado_livre_url={product.mercado_livre_url}
+            external_offer_active={product.external_offer_active}
+            external_offer_original_price={product.external_offer_original_price}
             offers={productOffers(product.id, rules)}
           />
         ))}

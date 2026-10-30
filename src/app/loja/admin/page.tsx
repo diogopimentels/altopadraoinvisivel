@@ -321,6 +321,11 @@ export default function AdminPage() {
                           Link externo
                         </span>
                       )}
+                      {(product.checkout_mode === 'external_link' || product.checkout_mode === 'mercado_livre') && product.external_offer_active && (
+                        <span className="bg-rose-100 text-rose-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded shrink-0">
+                          Promoção externa
+                        </span>
+                      )}
                     </h3>
                     <span className="font-extrabold text-[var(--color-loja-text)] mt-1">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
