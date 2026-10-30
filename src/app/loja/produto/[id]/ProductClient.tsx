@@ -2,11 +2,21 @@
 
 import { useState } from "react";
 import { useCartStore } from "@/store/useCartStore";
+import { productOffers } from "@/lib/crossSell";
+import { useCrossSellRules } from "@/lib/useCrossSell";
 
 export function ProductClient({ product }: { product: any }) {
   const { addItem } = useCartStore();
+  const rules = useCrossSellRules();
   const [currentImage, setCurrentImage] = useState(0);
   const outOfStock = Number(product.stock ?? 0) <= 0;
+  const offers = productOffers(product.id, rules);
+  const primaryOffer = offers.find((offer) => offer.role === "trigger") || offers[0];
+  const offerMessage = primaryOffer?.role === "trigger"
+    ? `Compre este produto e ganhe ${primaryOffer.discountPercent}% de desconto em ${primaryOffer.otherProductName}.`
+    : primaryOffer
+      ? `Ganhe ${primaryOffer.discountPercent}% de desconto neste produto comprando junto com ${primaryOffer.otherProductName}.`
+      : null;
 
   const handleBuy = () => {
     if (outOfStock) return;
@@ -28,15 +38,26 @@ export function ProductClient({ product }: { product: any }) {
       {/* Image Gallery */}
       <div className="flex flex-col gap-3">
         <div className="aspect-square w-full rounded-xl overflow-hidden bg-gray-100 border border-gray-200 relative">
-          {outOfStock ? (
-            <span className="absolute top-3 left-3 z-10 bg-red-600 text-white text-sm uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
-              Esgotado
-            </span>
-          ) : product.free_shipping ? (
-            <span className="absolute top-3 left-3 z-10 bg-emerald-600 text-white text-sm uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
-              Frete grátis
-            </span>
-          ) : null}
+          <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-2">
+            {outOfStock ? (
+              <span className="bg-red-600 text-white text-sm uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
+                Esgotado
+              </span>
+            ) : (
+              <>
+                {product.free_shipping && (
+                  <span className="bg-emerald-600 text-white text-sm uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
+                    Frete grátis
+                  </span>
+                )}
+                {primaryOffer && (
+                  <span className="bg-amber-400 text-amber-950 text-sm uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
+                    Oferta especial
+                  </span>
+                )}
+              </>
+            )}
+          </div>
           {product.images && product.images.length > 0 ? (
             <img 
               src={product.images[currentImage]} 
@@ -91,6 +112,13 @@ export function ProductClient({ product }: { product: any }) {
               <span className="text-sm font-medium">— você não paga o envio deste produto</span>
             </div>
           ) : null}
+          {!outOfStock && offerMessage && (
+            <div className="mt-3 bg-amber-50 border border-amber-200 text-amber-950 rounded-xl px-4 py-3">
+              <span className="block text-xs font-extrabold uppercase tracking-wide mb-1">Oferta especial</span>
+              <span className="text-sm font-semibold">{offerMessage}</span>
+              <span className="block text-xs text-amber-800 mt-1">O desconto entra automaticamente quando os dois produtos estiverem no carrinho.</span>
+            </div>
+          )}
         </div>
 
         {/* Action Button */}

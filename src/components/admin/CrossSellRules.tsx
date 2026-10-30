@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Trash } from "@phosphor-icons/react";
 
-type ProductOption = { id: string; name: string };
+type ProductOption = { id: string; name: string; checkout_mode?: string | null };
 type Rule = {
   id: string;
   triggerProductId: string;
@@ -11,6 +11,8 @@ type Rule = {
   discountPercent: number;
   triggerName: string;
   targetName: string;
+  compatible?: boolean;
+  compatibilityError?: string | null;
 };
 
 export function CrossSellRules() {
@@ -30,7 +32,9 @@ export function CrossSellRules() {
     const productData = await productRes.json();
     const ruleData = await ruleRes.json();
     if (Array.isArray(productData)) {
-      setProducts(productData.map((product: ProductOption) => ({ id: product.id, name: product.name })));
+      setProducts(productData.filter((product: ProductOption) =>
+        !product.checkout_mode || product.checkout_mode === "store"
+      ));
     }
     setRules(Array.isArray(ruleData.rules) ? ruleData.rules : []);
   };
@@ -73,6 +77,9 @@ export function CrossSellRules() {
         <p className="text-xs text-gray-500 mt-1">
           Quem leva um produto ganha desconto em outro, no mesmo carrinho. O valor com desconto é o que vai para o Mercado Pago.
         </p>
+        <p className="text-xs font-semibold text-amber-700 mt-2">
+          Produtos com link externo não aparecem nas opções, pois não passam pelo carrinho da loja.
+        </p>
       </div>
 
       <div className="border border-gray-200 rounded-xl bg-white p-4 flex flex-col gap-3">
@@ -85,7 +92,7 @@ export function CrossSellRules() {
           >
             <option value="">Escolha o produto</option>
             {products.map((product) => (
-              <option key={product.id} value={product.id}>{product.name}</option>
+              <option key={product.id} value={product.id} disabled={product.id === targetProductId}>{product.name}</option>
             ))}
           </select>
         </label>
@@ -98,7 +105,7 @@ export function CrossSellRules() {
           >
             <option value="">Escolha o produto</option>
             {products.map((product) => (
-              <option key={product.id} value={product.id}>{product.name}</option>
+              <option key={product.id} value={product.id} disabled={product.id === triggerProductId}>{product.name}</option>
             ))}
           </select>
         </label>
@@ -130,13 +137,20 @@ export function CrossSellRules() {
         <div className="flex flex-col gap-2">
           {rules.map((rule) => (
             <div key={rule.id} className="border border-gray-200 rounded-xl bg-white px-3 py-3 flex items-start justify-between gap-3">
-              <p className="text-sm">
-                <span className="font-bold">{rule.triggerName}</span>
-                <span className="text-gray-500"> libera </span>
-                <span className="font-bold">{rule.discountPercent}%</span>
-                <span className="text-gray-500"> em </span>
-                <span className="font-bold">{rule.targetName}</span>
-              </p>
+              <div className="flex flex-col gap-1">
+                <p className="text-sm">
+                  <span className="font-bold">{rule.triggerName}</span>
+                  <span className="text-gray-500"> libera </span>
+                  <span className="font-bold">{rule.discountPercent}%</span>
+                  <span className="text-gray-500"> em </span>
+                  <span className="font-bold">{rule.targetName}</span>
+                </p>
+                {rule.compatible === false && (
+                  <p className="text-xs font-bold text-red-600">
+                    Incompatível: {rule.compatibilityError}
+                  </p>
+                )}
+              </div>
               <button type="button" onClick={() => remove(rule.id)} className="text-red-600 shrink-0" aria-label="Apagar oferta">
                 <Trash size={18} />
               </button>

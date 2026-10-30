@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { ProductCard } from "./ProductCard";
+import { productOffers } from "@/lib/crossSell";
+import { useCrossSellRules } from "@/lib/useCrossSell";
 
 interface ProductListProps {
   products: any[];
@@ -9,6 +11,7 @@ interface ProductListProps {
 
 export function ProductList({ products }: ProductListProps) {
   const [selectedCategory, setSelectedCategory] = useState("Todos");
+  const rules = useCrossSellRules();
 
   // Extrai as categorias únicas ignorando valores nulos ou vazios
   const categories = [
@@ -61,6 +64,7 @@ export function ProductList({ products }: ProductListProps) {
             stock={product.stock}
             checkout_mode={product.checkout_mode}
             mercado_livre_url={product.mercado_livre_url}
+            offers={productOffers(product.id, rules)}
           />
         ))}
         {filteredProducts.length === 0 && (

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useCartStore } from "@/store/useCartStore";
 import Link from "next/link";
 import { externalLinkDestination, type CheckoutMode } from "@/lib/mercadoLivre";
+import type { ProductOffer } from "@/lib/crossSell";
 
 interface ProductCardProps {
   id: string;
@@ -19,6 +20,7 @@ interface ProductCardProps {
   stock?: number;
   checkout_mode?: CheckoutMode;
   mercado_livre_url?: string | null;
+  offers?: ProductOffer[];
 }
 
 export function ProductCard({
@@ -35,14 +37,21 @@ export function ProductCard({
   stock,
   checkout_mode,
   mercado_livre_url,
+  offers = [],
 }: ProductCardProps) {
   const { addItem } = useCartStore();
   const [currentImage, setCurrentImage] = useState(0);
   const externalUrl = externalLinkDestination(checkout_mode, mercado_livre_url);
   const productHref = externalUrl || `/produto/${id}`;
   const outOfStock = !externalUrl && Number(stock ?? 0) <= 0;
+  const primaryOffer = offers.find((offer) => offer.role === "trigger") || offers[0];
+  const offerMessage = primaryOffer?.role === "trigger"
+    ? `Compre este e ganhe ${primaryOffer.discountPercent}% em ${primaryOffer.otherProductName}.`
+    : primaryOffer
+      ? `${primaryOffer.discountPercent}% OFF comprando junto com ${primaryOffer.otherProductName}.`
+      : null;
 
-    const handleBuy = () => {
+  const handleBuy = () => {
     if (externalUrl) {
       window.location.assign(externalUrl);
       return;
@@ -67,15 +76,26 @@ export function ProductCard({
       
       <div className="aspect-square w-full bg-[var(--color-loja-surface)] rounded-md overflow-hidden relative border border-gray-100">
         <Link href={productHref} className="absolute inset-0 z-10" />
-        {outOfStock ? (
-          <span className="absolute top-3 left-3 z-20 bg-red-600 text-white text-xs uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
-            Esgotado
-          </span>
-        ) : free_shipping ? (
-          <span className="absolute top-3 left-3 z-20 bg-emerald-600 text-white text-xs uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
-            Frete grátis
-          </span>
-        ) : null}
+        <div className="absolute top-3 left-3 z-20 flex flex-col items-start gap-2 pointer-events-none">
+          {outOfStock ? (
+            <span className="bg-red-600 text-white text-xs uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
+              Esgotado
+            </span>
+          ) : (
+            <>
+              {free_shipping && (
+                <span className="bg-emerald-600 text-white text-xs uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
+                  Frete grátis
+                </span>
+              )}
+              {primaryOffer && (
+                <span className="bg-amber-400 text-amber-950 text-xs uppercase font-extrabold tracking-wide px-3 py-1.5 rounded-md shadow-md">
+                  Oferta especial
+                </span>
+              )}
+            </>
+          )}
+        </div>
         {images && images.length > 0 ? (
           <>
             <img 
@@ -119,6 +139,11 @@ export function ProductCard({
           ) : free_shipping ? (
             <p className="text-sm font-bold text-emerald-700 mt-1">Frete grátis neste produto</p>
           ) : null}
+          {!outOfStock && offerMessage && (
+            <p className="text-xs font-bold leading-snug text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2 mt-2">
+              {offerMessage}
+            </p>
+          )}
         </div>
         <button 
           onClick={handleBuy}

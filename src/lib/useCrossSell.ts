@@ -4,8 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { applyCrossSell, type CrossSellRule, type PricedLine } from "./crossSell";
 
 export function useCrossSell(items: { id: string; price: number }[]) {
+  const rules = useCrossSellRules();
+
+  return useMemo(() => applyCrossSell(items, rules), [items, rules]);
+}
+
+export function useCrossSellRules() {
   const [rules, setRules] = useState<CrossSellRule[]>([]);
-  const signature = items.map((item) => item.id).join("|");
 
   useEffect(() => {
     let cancelled = false;
@@ -18,9 +23,9 @@ export function useCrossSell(items: { id: string; price: number }[]) {
     return () => {
       cancelled = true;
     };
-  }, [signature]);
+  }, []);
 
-  return useMemo(() => applyCrossSell(items, rules), [items, rules]);
+  return rules;
 }
 
 export function lineUnit(priced: Map<string, PricedLine>, item: { id: string; price: number }) {

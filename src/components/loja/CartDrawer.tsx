@@ -1,18 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCartStore } from "@/store/useCartStore";
 import { X, Minus, Plus, Trash } from "@phosphor-icons/react";
 import { CheckoutForm } from "./CheckoutForm";
-import { discountedSubtotal, lineUnit, useCrossSell } from "@/lib/useCrossSell";
+import { discountedSubtotal, lineUnit, useCrossSellRules } from "@/lib/useCrossSell";
+import { applyCrossSell, cartSuggestions } from "@/lib/crossSell";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 export function CartDrawer() {
-  const { isOpen, toggleCart, items, updateQuantity, removeItem } = useCartStore();
+  const { isOpen, toggleCart, items, addItem, updateQuantity, removeItem } = useCartStore();
   const [step, setStep] = useState<'cart' | 'checkout'>('cart');
   const panelRef = useRef<HTMLDivElement>(null);
-  const priced = useCrossSell(items);
+  const rules = useCrossSellRules();
+  const priced = useMemo(() => applyCrossSell(items, rules), [items, rules]);
+  const suggestions = useMemo(
+    () => cartSuggestions(items.map((item) => item.id), rules),
+    [items, rules]
+  );
   const total = discountedSubtotal(items, priced);
 
   const handleClose = () => {
@@ -169,7 +175,8 @@ export function CartDrawer() {
                   <p>Seu carrinho está vazio.</p>
                 </div>
               ) : (
-                items.map((item) => {
+                <>
+                {items.map((item) => {
                   const offer = priced.get(item.id);
                   const unit = lineUnit(priced, item);
                   return (
@@ -216,7 +223,60 @@ export function CartDrawer() {
                     </div>
                   </div>
                   );
-                })
+                })}
+                {suggestions.length > 0 && (
+                  <section className="mt-1 border-2 border-amber-300 bg-amber-50 rounded-xl p-3 flex flex-col gap-3">
+                    <div>
+                      <p className="text-xs font-extrabold uppercase tracking-wide text-amber-900">Complete a oferta</p>
+                      <p className="text-xs text-amber-800 mt-0.5">Adicione o produto indicado e o desconto entra automaticamente.</p>
+                    </div>
+                    {suggestions.map((suggestion) => {
+                      const product = suggestion.product;
+                      const discountedPrice = product.price * (1 - suggestion.discountPercent / 100);
+                      return (
+                        <div key={`${suggestion.ruleId}-${product.id}`} className="bg-white border border-amber-200 rounded-lg p-3 flex gap-3 items-center">
+                          <div className="w-14 h-14 rounded-md bg-gray-100 overflow-hidden shrink-0">
+                            {product.images[0] ? (
+                              <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="w-full h-full flex items-center justify-center text-[9px] text-gray-500">Sem foto</span>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold leading-tight line-clamp-2">{product.name}</p>
+                            {suggestion.kind === "discounted_target" ? (
+                              <div className="mt-1">
+                                <span className="text-[10px] text-gray-400 line-through mr-1.5">{brl.format(product.price)}</span>
+                                <span className="text-xs font-extrabold text-emerald-700">{brl.format(discountedPrice)} · {suggestion.discountPercent}% OFF</span>
+                              </div>
+                            ) : (
+                              <p className="text-[11px] font-bold text-amber-800 mt-1">
+                                Libera {suggestion.discountPercent}% OFF em {suggestion.affectedProductName}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => addItem({
+                              id: product.id,
+                              name: product.name,
+                              price: product.price,
+                              imageUrl: product.images[0],
+                              weight: product.weight,
+                              width: product.width,
+                              height: product.height,
+                              length: product.length,
+                            })}
+                            className="shrink-0 bg-amber-400 text-amber-950 text-xs font-extrabold px-3 py-2 rounded-full active:scale-95 transition-transform"
+                          >
+                            Adicionar
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </section>
+                )}
+                </>
               )}
             </div>
 
